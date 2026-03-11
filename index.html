@@ -2,44 +2,40 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Kotochat</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#141414">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
         :root { --bg: #0a0a0a; --panel: #141414; --accent: #2962ff; --text: #f0f0f0; --border: #222; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
         
-        /* Главный контейнер */
-        .app-container { display: flex; flex-direction: column; height: 100vh; max-width: 1200px; margin: 0 auto; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+        .app-container { display: flex; flex-direction: column; height: 100vh; max-width: 1000px; margin: 0 auto; background: var(--bg); }
 
         header { padding: 15px 20px; background: var(--panel); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        #status-dot { width: 10px; height: 10px; background: #ff1744; border-radius: 50%; display: inline-block; margin-right: 10px; transition: 0.3s; }
+        #status-dot { width: 10px; height: 10px; background: #ff1744; border-radius: 50%; display: inline-block; margin-right: 10px; }
         .online { background: #00c853 !important; box-shadow: 0 0 8px #00c853; }
 
-        /* Адаптивная сетка видео */
-        #video-grid { display: grid; grid-template-columns: 1fr; gap: 5px; background: #000; padding: 5px; transition: 0.3s; }
-        video { width: 100%; height: 200px; object-fit: cover; background: #050505; border-radius: 4px; }
+        #video-grid { display: grid; grid-template-columns: 1fr; gap: 4px; background: #000; padding: 4px; border-bottom: 1px solid var(--border); }
+        video { width: 100%; height: 180px; object-fit: cover; background: #050505; border-radius: 4px; transform: scaleX(-1); }
+        #remoteVideo { transform: scaleX(1); }
 
-        /* Чат */
-        #chat-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .msg { background: var(--panel); padding: 12px 16px; border-radius: 8px; max-width: 85%; font-size: 15px; border: 1px solid var(--border); word-wrap: break-word; }
+        #chat-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; background-image: radial-gradient(#111 1px, transparent 1px); background-size: 20px 20px; }
+        .msg { background: var(--panel); padding: 12px 16px; border-radius: 8px; max-width: 85%; font-size: 15px; border: 1px solid var(--border); line-height: 1.4; }
         .msg.own { align-self: flex-end; border-color: var(--accent); background: #1a1a1a; }
 
-        /* Ввод сообщения */
         #input-area { padding: 15px 20px; background: var(--panel); display: flex; gap: 12px; border-top: 1px solid var(--border); padding-bottom: max(15px, env(safe-area-inset-bottom)); }
         input { background: #1a1a1a; border: 1px solid #333; color: white; padding: 12px 16px; border-radius: 8px; outline: none; flex: 1; font-size: 16px; }
         button { background: #1a1a1a; border: 1px solid #333; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        button:active { opacity: 0.7; }
 
-        /* Медиа-запросы для планшетов и ПК */
         @media (min-width: 768px) {
-            #video-grid { grid-template-columns: 1fr 1fr; height: auto; }
-            video { height: 300px; }
+            #video-grid { grid-template-columns: 1fr 1fr; }
+            video { height: 280px; }
             .msg { max-width: 60%; }
-            header { padding: 20px 30px; }
         }
-
         .hidden { display: none !important; }
     </style>
 </head>
@@ -66,8 +62,16 @@
 
 <script>
     const SERVER_URL = 'wss://kotkotenok43-kotochat-server.hf.space';
+    const myId = Math.random().toString(36).substr(2, 9);
     let ws, localStream, peerConn;
-    const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+    const rtcConfig = { 
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' }
+        ] 
+    };
 
     function initWS() {
         ws = new WebSocket(SERVER_URL);
@@ -78,6 +82,8 @@
         };
         ws.onmessage = async (e) => {
             const data = JSON.parse(e.data);
+            if (data.senderId === myId) return;
+
             if (data.type === 'text') renderMsg(data.text, false);
             if (data.type === 'offer') handleOffer(data.offer);
             if (data.type === 'answer') await peerConn.setRemoteDescription(new RTCSessionDescription(data.answer));
@@ -97,53 +103,59 @@
     document.getElementById('send-btn').onclick = () => {
         const input = document.getElementById('message-input');
         if (!input.value || !ws || ws.readyState !== WebSocket.OPEN) return;
-        ws.send(JSON.stringify({ type: 'text', text: input.value }));
+        const payload = { type: 'text', text: input.value, senderId: myId };
+        ws.send(JSON.stringify(payload));
         renderMsg(input.value, true);
         input.value = '';
     };
 
     document.getElementById('message-input').onkeypress = (e) => { if(e.key === 'Enter') document.getElementById('send-btn').click(); };
 
+    async function startMedia() {
+        if (!localStream) {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('localVideo').srcObject = localStream;
+        }
+    }
+
     document.getElementById('call-btn').onclick = async () => {
         const grid = document.getElementById('video-grid');
         grid.classList.toggle('hidden');
-        if (grid.classList.contains('hidden')) {
-            if (localStream) localStream.getTracks().forEach(t => t.stop());
-            return;
-        }
+        if (grid.classList.contains('hidden')) return;
 
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        document.getElementById('localVideo').srcObject = localStream;
-        
+        await startMedia();
         peerConn = new RTCPeerConnection(rtcConfig);
         localStream.getTracks().forEach(t => peerConn.addTrack(t, localStream));
         
-        peerConn.onicecandidate = (e) => e.candidate && ws.send(JSON.stringify({ type: 'candidate', candidate: e.candidate }));
+        peerConn.onicecandidate = (e) => {
+            if (e.candidate) ws.send(JSON.stringify({ type: 'candidate', candidate: e.candidate, senderId: myId }));
+        };
         peerConn.ontrack = (e) => document.getElementById('remoteVideo').srcObject = e.streams[0];
         
         const offer = await peerConn.createOffer();
         await peerConn.setLocalDescription(offer);
-        ws.send(JSON.stringify({ type: 'offer', offer }));
+        ws.send(JSON.stringify({ type: 'offer', offer, senderId: myId }));
     };
 
     async function handleOffer(offer) {
         document.getElementById('video-grid').classList.remove('hidden');
+        await startMedia();
         peerConn = new RTCPeerConnection(rtcConfig);
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        document.getElementById('localVideo').srcObject = localStream;
         localStream.getTracks().forEach(t => peerConn.addTrack(t, localStream));
-        peerConn.onicecandidate = (e) => e.candidate && ws.send(JSON.stringify({ type: 'candidate', candidate: e.candidate }));
+        
+        peerConn.onicecandidate = (e) => {
+            if (e.candidate) ws.send(JSON.stringify({ type: 'candidate', candidate: e.candidate, senderId: myId }));
+        };
         peerConn.ontrack = (e) => document.getElementById('remoteVideo').srcObject = e.streams[0];
+        
         await peerConn.setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await peerConn.createAnswer();
         await peerConn.setLocalDescription(answer);
-        ws.send(JSON.stringify({ type: 'answer', answer }));
+        ws.send(JSON.stringify({ type: 'answer', answer, senderId: myId }));
     }
 
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js');
-        });
+        window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
     }
 
     initWS();
