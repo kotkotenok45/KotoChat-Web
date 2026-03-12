@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kotochat-v1';
+const CACHE_NAME = 'kotochat-Cache-v1';
 const ASSETS = [
   './',
   './index.html',
