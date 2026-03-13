@@ -1,21 +1,20 @@
 {
-  "name": "KotoChat Web",
+  "name": "KotoChat",
   "short_name": "KotoChat",
-  "description": "Serious Messenger for Professional Communication",
-  "start_url": "index.html",
+  "description": "Secure Messenger",
+  "start_url": "./index.html",
   "display": "standalone",
-  "orientation": "any",
-  "background_color": "#0a0a0a",
-  "theme_color": "#141414",
+  "background_color": "#000000",
+  "theme_color": "#1c1c1e",
   "icons": [
     {
-      "src": "https://img.icons8.com/ios-filled/192/2962ff/security-checked.png",
+      "src": "https://raw.githubusercontent.com/user/repo/main/kotochat_logo_secure_transparent.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "https://img.icons8.com/ios-filled/512/2962ff/security-checked.png",
+      "src": "https://raw.githubusercontent.com/user/repo/main/kotochat_logo_secure_transparent.png",
       "sizes": "512x512",
       "type": "image/png"
     }
