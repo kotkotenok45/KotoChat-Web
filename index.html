@@ -4,176 +4,148 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>KotoChat</title>
-    
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/512/512638.png" type="image/png">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/512/512638.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/512/512638.png">
     <style>
-        :root { --bg: #000; --panel: #1c1c1e; --accent: #0a84ff; --text: #fff; --border: #38383a; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        :root { --tg-bg: #0e1621; --tg-panel: #17212b; --tg-accent: #2b5278; --tg-blue: #2481cc; --tg-text: #ffffff; --tg-gray: #8b969f; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: var(--tg-bg); color: var(--tg-text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        @media (min-width: 700px) {
-            body { background: #080808; }
-            .app-container { max-width: 500px; margin: 0 auto; width: 100%; height: 100%; border-left: 1px solid var(--border); border-right: 1px solid var(--border); position: relative; background: var(--bg); }
-        }
+        /* Шапка в стиле ТГ */
+        header { background: var(--tg-panel); height: 56px; display: flex; align-items: center; padding: 0 16px; gap: 20px; border-bottom: 1px solid #101921; z-index: 10; }
+        .menu-icon { font-size: 24px; cursor: pointer; color: var(--tg-gray); }
+        .header-title { font-size: 20px; font-weight: 500; flex: 1; }
 
-        header { padding: calc(env(safe-area-inset-top) + 10px) 20px 10px; background: var(--panel); border-bottom: 0.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 100; }
-        #main-view { flex: 1; overflow-y: auto; padding-bottom: 160px; scroll-behavior: smooth; }
-        
-        .chat-container { display: flex; flex-direction: column; padding: 15px; gap: 8px; }
-        .msg { padding: 10px 14px; border-radius: 18px; max-width: 80%; font-size: 16px; line-height: 1.4; position: relative; }
-        .msg.in { align-self: flex-start; background: #262629; border-bottom-left-radius: 4px; }
-        .msg.out { align-self: flex-end; background: var(--accent); border-bottom-right-radius: 4px; }
-        .sender-name { font-size: 11px; opacity: 0.5; margin-bottom: 3px; display: block; }
+        /* Список чатов */
+        #chats-list { flex: 1; overflow-y: auto; display: block; }
+        .chat-item { display: flex; align-items: center; padding: 12px 16px; gap: 15px; border-bottom: 1px solid #101921; cursor: pointer; }
+        .chat-avatar { width: 54px; height: 54px; background: linear-gradient(135deg, #517da2, #295071); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; }
+        .chat-info { flex: 1; border-bottom: 0.5px solid #101921; padding-bottom: 10px; }
+        .chat-name { font-weight: bold; font-size: 16px; margin-bottom: 4px; }
+        .chat-last-msg { color: var(--tg-gray); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        #input-area { position: fixed; bottom: calc(env(safe-area-inset-bottom) + 65px); left: 0; right: 0; background: var(--panel); border-top: 0.5px solid var(--border); padding: 10px 15px; display: flex; gap: 10px; z-index: 200; }
-        @media (min-width: 700px) { #input-area { max-width: 500px; left: 50%; transform: translateX(-50%); } }
-        #message-input { flex: 1; background: #000; border: 1px solid var(--border); color: #fff; padding: 12px 18px; border-radius: 25px; font-size: 16px; }
+        /* Окно сообщений (скрыто по умолчанию) */
+        #chat-window { position: fixed; inset: 0; background: #0e1621; z-index: 100; display: none; flex-direction: column; }
+        .msg-container { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: contain; }
+        .bubble { padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 15px; position: relative; line-height: 1.4; color: #fff; }
+        .bubble.in { align-self: flex-start; background: #182533; border-bottom-left-radius: 2px; }
+        .bubble.out { align-self: flex-end; background: #2b5278; border-bottom-right-radius: 2px; }
 
-        nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(28,28,30,0.95); backdrop-filter: blur(15px); border-top: 0.5px solid var(--border); display: flex; justify-content: space-around; padding-bottom: env(safe-area-inset-bottom); padding-top: 10px; height: calc(env(safe-area-inset-bottom) + 65px); z-index: 200; }
-        @media (min-width: 700px) { nav { max-width: 500px; left: 50%; transform: translateX(-50%); } }
-        .nav-item { color: #8e8e93; font-size: 11px; text-align: center; flex: 1; cursor: pointer; }
-        .nav-item.active { color: var(--accent); }
-        .nav-icon { font-size: 24px; margin-bottom: 2px; }
+        /* Кнопка создания чата (как на скриншоте пользователя) */
+        .fab { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background: var(--tg-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 50; }
 
-        #auth-screen { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 25px; }
-        .auth-card { background: var(--panel); padding: 30px; border-radius: 25px; width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 15px; text-align: center; }
-        .auth-card img { width: 80px; height: 80px; border-radius: 20px; margin: 0 auto 10px; }
-        .auth-card input { background: #2c2c2e; border: none; color: #fff; padding: 15px; border-radius: 15px; font-size: 16px; width: 100%; }
-        .auth-card button { background: var(--accent); color: #fff; border: none; padding: 15px; border-radius: 15px; font-weight: 700; font-size: 16px; cursor: pointer; }
+        /* Поле ввода */
+        .input-bar { background: var(--tg-panel); padding: 8px 12px; display: flex; align-items: center; gap: 10px; }
+        #message-input { flex: 1; background: none; border: none; color: white; font-size: 16px; padding: 10px; }
+
+        #auth-screen { position: fixed; inset: 0; background: var(--tg-bg); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .auth-card { background: var(--tg-panel); padding: 30px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; }
+        input { width: 100%; background: #242f3d; border: 1px solid #242f3d; color: white; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+        button { width: 100%; background: var(--tg-blue); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
         .hidden { display: none !important; }
-        #install-prompt { background: #fff; color: #000; border: none; padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
     <div id="auth-screen">
         <div class="auth-card">
-            <img src="https://cdn-icons-png.flaticon.com/512/512/512638.png" alt="Logo">
-            <h2 style="margin:0">KotoChat</h2>
-            <input type="text" id="reg-id" placeholder="ID (логин)">
+            <h2 style="margin-top:0">KotoChat</h2>
+            <input type="text" id="reg-id" placeholder="ID">
             <input type="text" id="reg-name" placeholder="Имя" style="display:none">
             <input type="password" id="reg-pass" placeholder="Пароль">
-            <button onclick="handleAuth()" id="auth-btn">Войти</button>
-            <p id="auth-toggle" style="color:var(--accent); font-size:14px; cursor:pointer; margin-top:10px" onclick="toggleMode()">Нет аккаунта? Регистрация</p>
+            <button onclick="handleAuth()" id="auth-btn">ВОЙТИ</button>
+            <p onclick="toggleMode()" id="auth-toggle" style="color:var(--tg-blue); font-size:14px; cursor:pointer; margin-top:15px">Нет аккаунта? Регистрация</p>
         </div>
     </div>
 
-    <header>
-        <div style="font-weight:bold; font-size:20px" id="view-title">Чат</div>
-        <button id="install-prompt" class="hidden">УСТАНОВИТЬ</button>
-    </header>
-
-    <div id="main-view">
-        <div id="chat-container" class="chat-container"></div>
+    <div id="main-screen">
+        <header>
+            <div class="menu-icon">☰</div>
+            <div class="header-title">KotoChat</div>
+        </header>
+        <div id="chats-list">
+            <div class="chat-item" onclick="openChat('Global Chat')">
+                <div class="chat-avatar">K</div>
+                <div class="chat-info">
+                    <div class="chat-name">Общий чат</div>
+                    <div class="chat-last-msg">Нажмите, чтобы войти в переписку...</div>
+                </div>
+            </div>
+        </div>
+        <div class="fab" onclick="alert('Поиск контактов скоро!')">+</div>
     </div>
 
-    <div id="input-area" class="hidden">
-        <input type="text" id="message-input" placeholder="Сообщение..." autocomplete="off">
-        <button onclick="send()" style="background:none; border:none; color:var(--accent); font-weight:bold; font-size:16px; padding-left:10px">ОТПР.</button>
+    <div id="chat-window">
+        <header>
+            <div class="menu-icon" onclick="closeChat()">←</div>
+            <div class="header-title" id="chat-title">Чат</div>
+        </header>
+        <div id="msg-container" class="msg-container"></div>
+        <div class="input-bar">
+            <input type="text" id="message-input" placeholder="Сообщение...">
+            <button onclick="send()" style="width:auto; background:none; color:var(--tg-blue)">ОТПР.</button>
+        </div>
     </div>
 
-    <nav>
-        <div class="nav-item active" onclick="switchTab('global', this)"><div class="nav-icon">💬</div>Чат</div>
-        <div class="nav-item" onclick="switchTab('contacts', this)"><div class="nav-icon">👤</div>Друзья</div>
-        <div class="nav-item" onclick="switchTab('settings', this)"><div class="nav-icon">⚙️</div>Профиль</div>
-    </nav>
-</div>
+    <script>
+        const ws = new WebSocket('wss://kotkotenok43-kotochat-server.hf.space');
+        let myId, myName, isReg = false;
 
-<script>
-    const ws = new WebSocket('wss://kotkotenok43-kotochat-server.hf.space');
-    let myId, myName, isReg = false;
-
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
-    
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        document.getElementById('install-prompt').classList.remove('hidden');
-    });
-
-    document.getElementById('install-prompt').onclick = () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            document.getElementById('install-prompt').classList.add('hidden');
+        function toggleMode() {
+            isReg = !isReg;
+            document.getElementById('auth-btn').textContent = isReg ? 'СОЗДАТЬ АККАУНТ' : 'ВОЙТИ';
+            document.getElementById('reg-name').style.display = isReg ? 'block' : 'none';
         }
-    };
 
-    function toggleMode() {
-        isReg = !isReg;
-        document.getElementById('auth-btn').textContent = isReg ? 'Создать аккаунт' : 'Войти';
-        document.getElementById('reg-name').style.display = isReg ? 'block' : 'none';
-        document.getElementById('auth-toggle').textContent = isReg ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Регистрация';
-    }
+        function handleAuth() {
+            ws.send(JSON.stringify({
+                type: isReg ? 'register' : 'login',
+                userId: document.getElementById('reg-id').value,
+                name: document.getElementById('reg-name').value || 'User',
+                password: document.getElementById('reg-pass').value
+            }));
+        }
 
-    function handleAuth() {
-        const data = {
-            type: isReg ? 'register' : 'login',
-            userId: document.getElementById('reg-id').value,
-            name: document.getElementById('reg-name').value,
-            password: document.getElementById('reg-pass').value
+        ws.onmessage = (e) => {
+            const res = JSON.parse(e.data);
+            if (res.type === 'auth_success') {
+                myId = res.userId; myName = res.name;
+                document.getElementById('auth-screen').classList.add('hidden');
+            } else if (res.type === 'history') {
+                document.getElementById('msg-container').innerHTML = '';
+                res.messages.forEach(renderMsg);
+            } else if (res.type === 'text') {
+                renderMsg(res);
+            }
         };
-        ws.send(JSON.stringify(data));
-    }
 
-    ws.onmessage = (e) => {
-        const res = JSON.parse(e.data);
-        if (res.type === 'auth_success') {
-            myId = res.userId; myName = res.name;
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('input-area').classList.remove('hidden');
-        } else if (res.type === 'history') {
-            document.getElementById('chat-container').innerHTML = '';
-            res.messages.forEach(renderMsg);
-        } else if (res.type === 'text') {
-            renderMsg(res);
-        } else if (res.type === 'error') alert(res.text);
-    };
-
-    function send() {
-        const inp = document.getElementById('message-input');
-        if (!inp.value) return;
-        ws.send(JSON.stringify({ type: 'text', text: inp.value, senderId: myId, senderName: myName }));
-        inp.value = '';
-    }
-
-    function renderMsg(msg) {
-        const cont = document.getElementById('chat-container');
-        if (!cont) return;
-        const div = document.createElement('div');
-        const isOwn = msg.senderId === myId;
-        div.className = `msg ${isOwn ? 'out' : 'in'}`;
-        div.innerHTML = `${!isOwn ? `<span class="sender-name">${msg.senderName}</span>` : ''}${msg.text}`;
-        cont.appendChild(div);
-        document.getElementById('main-view').scrollTop = cont.scrollHeight;
-    }
-
-    function switchTab(tab, el) {
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        el.classList.add('active');
-        const view = document.getElementById('main-view');
-        const input = document.getElementById('input-area');
-        
-        if (tab === 'settings') {
-            input.classList.add('hidden');
-            view.innerHTML = `<div style="padding:50px; text-align:center"><h2>${myName}</h2><p style="color:var(--accent)">ID: ${myId}</p><button onclick="location.reload()" style="margin-top:20px; background:none; border:1px solid #ff3b30; color:#ff3b30; padding:10px 20px; border-radius:12px">Выйти</button></div>`;
-        } else if (tab === 'global') {
-            input.classList.remove('hidden');
-            view.innerHTML = '<div id="chat-container" class="chat-container"></div>';
+        function openChat(name) {
+            document.getElementById('chat-window').style.display = 'flex';
+            document.getElementById('chat-title').textContent = name;
             ws.send(JSON.stringify({ type: 'login', userId: myId, password: "" })); 
-        } else {
-            input.classList.add('hidden');
-            view.innerHTML = '<div style="padding:50px; text-align:center; color:#8e8e93">Контакты будут доступны в обновлении</div>';
         }
-    }
-    document.getElementById('message-input').onkeypress = (e) => { if(e.key === 'Enter') send() };
-</script>
+
+        function closeChat() { document.getElementById('chat-window').style.display = 'none'; }
+
+        function send() {
+            const inp = document.getElementById('message-input');
+            if (!inp.value) return;
+            ws.send(JSON.stringify({ type: 'text', text: inp.value, senderId: myId, senderName: myName }));
+            inp.value = '';
+        }
+
+        function renderMsg(msg) {
+            const cont = document.getElementById('msg-container');
+            const div = document.createElement('div');
+            const isOwn = msg.senderId === myId;
+            div.className = `bubble ${isOwn ? 'out' : 'in'}`;
+            div.innerHTML = `<span style="font-size:12px; color:var(--tg-blue); font-weight:bold">${msg.senderName}</span><br>${msg.text}`;
+            cont.appendChild(div);
+            cont.scrollTop = cont.scrollHeight;
+        }
+
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+    </script>
 </body>
 </html>
