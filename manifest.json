@@ -8,13 +8,13 @@
   "theme_color": "#1c1c1e",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/user/repo/main/kotochat_logo_secure_transparent.png",
+      "src": "./logo.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "https://raw.githubusercontent.com/user/repo/main/kotochat_logo_secure_transparent.png",
+      "src": "./logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }
