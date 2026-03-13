@@ -3,129 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KotoChat ULTIMATE</title>
+    <title>KotoChat</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="https://fonts.gstatic.com/s/i/googlematerialicons/security/v15/white-24dp/4x/gm_security_white_24dp.png">
     <style>
-        :root { --bg: #000; --panel: #1c1c1e; --accent: #0a84ff; --text: #fff; --border: #38383a; }
+        :root { --bg: #000; --panel: #1c1c1e; --accent: #0a84ff; --border: #38383a; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* HEADER */
-        header { padding: calc(env(safe-area-inset-top) + 10px) 20px 10px; background: var(--panel); border-bottom: 0.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+        /* Жесткая фиксация высоты экрана для телефонов */
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; }
+        
+        /* Flexbox-контейнер для всего приложения */
+        #app-container { display: flex; flex-direction: column; height: 100%; width: 100%; }
+        
+        /* ШАПКА */
+        header { height: 60px; background: var(--panel); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
         .back-btn { color: var(--accent); font-weight: bold; cursor: pointer; display: none; }
-
-        /* CONTENT */
-        #view-content { flex: 1; overflow-y: auto; padding-bottom: 150px; }
         
-        /* MESSAGES */
+        /* ЗОНА ЧАТА / КОНТЕНТА */
+        #view-content { flex: 1; overflow-y: auto; background: var(--bg); }
+        
+        /* ПОЛЕ ВВОДА */
+        #input-area { background: var(--panel); display: flex; align-items: center; padding: 10px 15px; gap: 10px; border-top: 1px solid var(--border); flex-shrink: 0; }
+        #message-input { flex: 1; background: #000; border: 1px solid var(--border); color: #fff; padding: 12px 18px; border-radius: 25px; font-size: 16px; }
+        
+        /* НИЖНЕЕ МЕНЮ (НАВИГАЦИЯ) */
+        nav { height: 60px; background: var(--panel); display: flex; border-top: 1px solid var(--border); flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #8e8e93; font-size: 11px; cursor: pointer; gap: 4px; transition: 0.2s; }
+        .nav-item.active { color: var(--accent); }
+        .nav-icon { font-size: 22px; }
+        
+        /* СООБЩЕНИЯ */
         .chat-container { display: flex; flex-direction: column; padding: 15px; gap: 8px; }
-        .msg { padding: 10px 14px; border-radius: 18px; max-width: 80%; font-size: 16px; line-height: 1.4; animation: fadeIn 0.2s ease; }
+        .msg { padding: 10px 14px; border-radius: 18px; max-width: 80%; font-size: 16px; line-height: 1.4; word-break: break-word; animation: fadeIn 0.2s ease; }
         .msg.in { align-self: flex-start; background: #262629; border-bottom-left-radius: 4px; }
         .msg.out { align-self: flex-end; background: var(--accent); border-bottom-right-radius: 4px; }
-        .sender { font-size: 11px; color: var(--accent); font-weight: bold; margin-bottom: 2px; display: block; }
-
-        /* LISTS (Friends/Chats) */
-        .list-item { padding: 15px 20px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 15px; cursor: pointer; }
-        .list-item:active { background: #1c1c1e; }
-        .avatar { width: 45px; height: 45px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-
-        /* INPUT */
-        #input-area { position: fixed; bottom: calc(env(safe-area-inset-bottom) + 65px); left: 0; right: 0; background: rgba(28,28,30,0.95); backdrop-filter: blur(20px); padding: 10px 15px; display: flex; gap: 10px; border-top: 0.5px solid var(--border); z-index: 200; }
-        #message-input { flex: 1; background: #000; border: 1px solid var(--border); color: #fff; padding: 12px 18px; border-radius: 25px; font-size: 16px; }
-
-        /* NAV */
-        nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--panel); display: flex; height: calc(env(safe-area-inset-bottom) + 65px); border-top: 0.5px solid var(--border); padding-bottom: env(safe-area-inset-bottom); z-index: 300; }
-        .nav-item { flex: 1; text-align: center; padding-top: 10px; color: #8e8e93; font-size: 11px; cursor: pointer; }
-        .nav-item.active { color: var(--accent); }
-
-        /* AUTH */
-        #auth-screen { position: fixed; inset: 0; background: #000; z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        .sender { font-size: 11px; color: #a1caff; font-weight: bold; margin-bottom: 3px; display: block; }
+        .msg.in .sender { color: var(--accent); }
+        
+        /* ЭКРАН ВХОДА (ПОВЕРХ ВСЕГО) */
+        #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .auth-card { background: var(--panel); padding: 30px; border-radius: 25px; width: 90%; max-width: 340px; text-align: center; border: 1px solid var(--border); }
-        .auth-card input { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 15px; border-radius: 12px; margin-bottom: 10px; }
-        .auth-card button { width: 100%; background: var(--accent); color: #fff; border: none; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        .auth-card input { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 15px; border-radius: 15px; margin-bottom: 12px; font-size: 16px; }
+        .auth-card button { width: 100%; background: var(--accent); color: #fff; border: none; padding: 15px; border-radius: 15px; font-weight: bold; font-size: 16px; cursor: pointer; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; } }
-        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="auth-screen">
     <div class="auth-card">
-        <h2 style="margin-bottom:20px">KotoChat</h2>
+        <h2 style="margin-top:0; margin-bottom:20px;">KotoChat</h2>
         <input type="text" id="reg-id" placeholder="Ваш ID (логин)">
-        <input type="text" id="reg-name" placeholder="Отображаемое имя" style="display:none">
+        <input type="text" id="reg-name" placeholder="Имя профиля" style="display:none">
         <input type="password" id="reg-pass" placeholder="Пароль">
         <button onclick="handleAuth()" id="auth-btn">Войти</button>
-        <p onclick="toggleMode()" id="auth-toggle" style="color:var(--accent); cursor:pointer; margin-top:15px; font-size: 14px;">Нет аккаунта? Регистрация</p>
+        <p onclick="toggleMode()" id="auth-toggle" style="color:var(--accent); cursor:pointer; margin-top:15px; font-size: 14px;">Нет аккаунта? Создать</p>
     </div>
 </div>
 
-<header>
-    <div id="back-btn" class="back-btn" onclick="showTab('friends')">← Назад</div>
-    <div id="header-title" style="font-weight:bold; font-size:18px">KotoChat</div>
-    <div id="online-status" style="color:#32d74b; font-size:12px">● Online</div>
-</header>
+<div id="app-container">
+    
+    <header>
+        <div id="back-btn" class="back-btn" onclick="showTab('dialogs')">← Назад</div>
+        <div id="header-title" style="font-weight:bold; font-size:18px">KotoChat</div>
+        <div style="color:#32d74b; font-size:12px; display:flex; align-items:center; gap:5px;"><span style="width:8px;height:8px;background:#32d74b;border-radius:50%;display:inline-block;box-shadow:0 0 5px #32d74b;"></span>Online</div>
+    </header>
 
-<div id="view-content">
+    <div id="view-content"></div>
+
+    <div id="input-area">
+        <input type="text" id="message-input" placeholder="Сообщение..." autocomplete="off">
+        <button onclick="send()" style="background:none; border:none; color:var(--accent); font-weight:bold; font-size:16px;">ОТПР.</button>
     </div>
 
-<div id="input-area" class="hidden">
-    <input type="text" id="message-input" placeholder="Сообщение...">
-    <button onclick="send()" style="background:none; border:none; color:var(--accent); font-weight:bold; font-size:16px">ОТПР.</button>
-</div>
+    <nav>
+        <div class="nav-item active" data-tab="global" onclick="showTab('global')"><div class="nav-icon">💬</div>Общий</div>
+        <div class="nav-item" data-tab="dialogs" onclick="showTab('dialogs')"><div class="nav-icon">👥</div>Диалоги</div>
+        <div class="nav-item" data-tab="profile" onclick="showTab('profile')"><div class="nav-icon">👤</div>Профиль</div>
+    </nav>
 
-<nav id="main-nav" class="hidden">
-    <div class="nav-item active" onclick="showTab('global', this)"><div>💬</div>Общий</div>
-    <div class="nav-item" onclick="showTab('friends', this)"><div>👥</div>Диалоги</div>
-    <div class="nav-item" onclick="showTab('profile', this)"><div>⚙️</div>Профиль</div>
-</nav>
+</div>
 
 <script>
-    const ws = new WebSocket('wss://kotkotenok43-kotochat-server.hf.space');
-    let myId, myName, isReg = false, currentChat = 'global';
+    let ws;
+    let myId = localStorage.getItem('koto_id') || '';
+    let myName = localStorage.getItem('koto_name') || '';
+    let myPass = localStorage.getItem('koto_pass') || '';
+    let isReg = false;
+    let currentChat = 'global';
+
+    function connect() {
+        ws = new WebSocket('wss://kotkotenok43-kotochat-server.hf.space');
+        
+        ws.onopen = () => {
+            if (myId && myPass) {
+                ws.send(JSON.stringify({ type: 'login', userId: myId, password: myPass }));
+            }
+        };
+
+        ws.onmessage = (e) => {
+            const res = JSON.parse(e.data);
+            if (res.type === 'auth_success') {
+                myId = res.userId; 
+                myName = res.name;
+                localStorage.setItem('koto_id', myId);
+                localStorage.setItem('koto_name', myName);
+                localStorage.setItem('koto_pass', document.getElementById('reg-pass').value || myPass);
+                
+                // Убираем экран входа и показываем Общий чат
+                document.getElementById('auth-screen').style.display = 'none';
+                showTab('global'); 
+            } 
+            else if (res.type === 'history') {
+                const cont = document.getElementById('chat-container');
+                if (cont) { 
+                    cont.innerHTML = ''; 
+                    res.messages.forEach(renderMsg); 
+                    scrollToBottom(); 
+                }
+            } 
+            else if (res.type === 'text') {
+                if (res.chatId === currentChat) {
+                    renderMsg(res);
+                    scrollToBottom();
+                } else {
+                    if(navigator.vibrate) navigator.vibrate(200); // Вибрация для сообщений в фоне
+                }
+            } 
+            else if (res.type === 'error') {
+                alert(res.text);
+                if (res.text === 'Неверный пароль' || res.text === 'Пользователь не найден') logout();
+            }
+        };
+
+        ws.onclose = () => setTimeout(connect, 3000);
+    }
+    connect();
 
     function toggleMode() {
         isReg = !isReg;
         document.getElementById('auth-btn').textContent = isReg ? 'Создать аккаунт' : 'Войти';
         document.getElementById('reg-name').style.display = isReg ? 'block' : 'none';
-        document.getElementById('auth-toggle').textContent = isReg ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Регистрация';
+        document.getElementById('auth-toggle').textContent = isReg ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Создать';
     }
 
     function handleAuth() {
-        const id = document.getElementById('reg-id').value;
-        const pass = document.getElementById('reg-pass').value;
-        const name = document.getElementById('reg-name').value;
-        if (!id || !pass) return alert('Заполните поля');
+        const id = document.getElementById('reg-id').value.trim();
+        const pass = document.getElementById('reg-pass').value.trim();
+        const name = document.getElementById('reg-name').value.trim();
+        if (!id || !pass) return alert('Введите ID и пароль!');
+        myPass = pass;
         ws.send(JSON.stringify({ type: isReg ? 'register' : 'login', userId: id, name: name || id, password: pass }));
     }
 
-    ws.onmessage = (e) => {
-        const res = JSON.parse(e.data);
-        if (res.type === 'auth_success') {
-            myId = res.userId; myName = res.name;
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('main-nav').classList.remove('hidden');
-            showTab('global');
-        } else if (res.type === 'history') {
-            const cont = document.getElementById('chat-container');
-            if (cont) { cont.innerHTML = ''; res.messages.forEach(renderMsg); }
-        } else if (res.type === 'text') {
-            if (res.chatId === currentChat) renderMsg(res);
-        } else if (res.type === 'error') alert(res.text);
-    };
+    function logout() {
+        localStorage.clear();
+        location.reload();
+    }
 
     function send() {
         const inp = document.getElementById('message-input');
-        if (!inp.value) return;
-        ws.send(JSON.stringify({ 
-            type: 'text', 
-            text: inp.value, 
-            senderId: myId, 
-            senderName: myName, 
-            chatId: currentChat 
-        }));
+        const text = inp.value.trim();
+        if (!text || !currentChat) return;
+        ws.send(JSON.stringify({ type: 'text', text: text, senderId: myId, senderName: myName, chatId: currentChat }));
         inp.value = '';
     }
 
@@ -137,62 +179,86 @@
         div.className = `msg ${isOwn ? 'out' : 'in'}`;
         div.innerHTML = `${!isOwn ? `<span class="sender">${msg.senderName}</span>` : ''}${msg.text}`;
         cont.appendChild(div);
-        document.getElementById('view-content').scrollTop = cont.scrollHeight;
     }
 
-    function showTab(tab, el) {
-        if (el) {
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
-        }
+    function scrollToBottom() {
+        const content = document.getElementById('view-content');
+        content.scrollTop = content.scrollHeight;
+    }
+
+    // ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ВКЛАДОК
+    function showTab(tabId) {
+        // Подсветка активной вкладки
+        document.querySelectorAll('.nav-item').forEach(el => {
+            if(el.dataset.tab === tabId) el.classList.add('active');
+            else el.classList.remove('active');
+        });
+
         const content = document.getElementById('view-content');
         const input = document.getElementById('input-area');
-        const back = document.getElementById('back-btn');
-        currentChat = tab === 'global' ? 'global' : currentChat;
+        const headerTitle = document.getElementById('header-title');
+        const backBtn = document.getElementById('back-btn');
 
-        if (tab === 'global') {
-            back.style.display = 'none';
-            input.classList.remove('hidden');
+        if (tabId === 'global') {
+            currentChat = 'global';
+            headerTitle.textContent = 'Общий чат';
+            backBtn.style.display = 'none';
+            input.style.display = 'flex'; // Показываем поле ввода
             content.innerHTML = '<div id="chat-container" class="chat-container"></div>';
-            document.getElementById('header-title').textContent = 'Общий чат';
-            ws.send(JSON.stringify({ type: 'login', userId: myId, password: "" })); 
+            ws.send(JSON.stringify({ type: 'get_history', chatId: 'global' }));
         } 
-        else if (tab === 'friends') {
-            back.style.display = 'none';
-            input.classList.add('hidden');
-            document.getElementById('header-title').textContent = 'Диалоги';
+        else if (tabId === 'dialogs') {
+            currentChat = null;
+            headerTitle.textContent = 'Диалоги';
+            backBtn.style.display = 'none';
+            input.style.display = 'none'; // Скрываем поле ввода
             content.innerHTML = `
-                <div style="padding:15px"><input type="text" id="find-user" placeholder="Поиск по ID..." style="width:100%; background:#1c1c1e; border:1px solid #38383a; color:#fff; padding:12px; border-radius:10px;">
-                <button onclick="openPrivate()" style="margin-top:10px; background:var(--accent); border:none; color:#fff; width:100%; padding:10px; border-radius:10px; font-weight:bold">Найти и написать</button></div>
-                <div class="list-item" onclick="showTab('global')"><div class="avatar">G</div><div><b>Общий чат</b><br><small style="color:#8e8e93">Все пользователи</small></div></div>
+                <div style="padding:15px">
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="find-user" placeholder="Поиск по ID друга..." style="flex:1; background:#1c1c1e; border:1px solid #38383a; color:#fff; padding:12px 15px; border-radius:15px; font-size:16px;">
+                        <button onclick="openPrivateChat(document.getElementById('find-user').value)" style="background:var(--accent); border:none; color:#fff; padding:0 20px; border-radius:15px; font-weight:bold;">Найти</button>
+                    </div>
+                </div>
+                <div style="padding: 15px 20px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 15px; cursor: pointer;" onclick="showTab('global')">
+                    <div style="width: 45px; height: 45px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;">🌍</div>
+                    <div><div style="font-weight:bold; font-size:16px;">Общий чат</div><div style="color:#8e8e93; font-size:13px;">Чат для всех пользователей</div></div>
+                </div>
             `;
         } 
-        else if (tab === 'profile') {
-            back.style.display = 'none';
-            input.classList.add('hidden');
-            document.getElementById('header-title').textContent = 'Профиль';
+        else if (tabId === 'profile') {
+            currentChat = null;
+            headerTitle.textContent = 'Профиль';
+            backBtn.style.display = 'none';
+            input.style.display = 'none'; // Скрываем поле ввода
             content.innerHTML = `
-                <div style="padding:40px; text-align:center">
-                    <div style="width:100px; height:100px; background:var(--accent); border-radius:50%; margin:0 auto 20px; display:flex; align-items:center; justify-content:center; font-size:40px">👤</div>
-                    <h2 style="margin:0">${myName}</h2>
-                    <p style="opacity:0.5; margin-bottom:30px">ID: ${myId}</p>
-                    <button onclick="location.reload()" style="background:#ff3b30; border:none; color:#fff; padding:15px; border-radius:15px; width:100%; font-weight:bold">ВЫЙТИ</button>
-                </div>`;
+                <div style="padding:40px 20px; text-align:center;">
+                    <div style="width:100px; height:100px; background:var(--accent); border-radius:50%; margin:0 auto 20px; display:flex; align-items:center; justify-content:center; font-size:40px; color:#fff;">${myName ? myName.charAt(0).toUpperCase() : 'U'}</div>
+                    <h2 style="margin:0 0 5px 0;">${myName}</h2>
+                    <p style="color:#8e8e93; margin-top:0;">ID: ${myId}</p>
+                    <button onclick="logout()" style="margin-top:30px; background:#ff3b30; border:none; color:#fff; padding:15px; border-radius:15px; width:100%; font-weight:bold; font-size:16px;">ВЫЙТИ ИЗ АККАУНТА</button>
+                </div>
+            `;
         }
     }
 
-    function openPrivate() {
-        const targetId = document.getElementById('find-user').value;
+    function openPrivateChat(targetId) {
+        targetId = targetId.trim();
         if (!targetId) return;
+        if (targetId === myId) return alert("Нельзя писать самому себе!");
+        
+        // Секретный ключ чата между двумя людьми
         currentChat = [myId, targetId].sort().join('_');
+        
+        document.getElementById('header-title').textContent = `Чат с ${targetId}`;
         document.getElementById('back-btn').style.display = 'block';
-        document.getElementById('input-area').classList.remove('hidden');
+        document.getElementById('input-area').style.display = 'flex';
+        
         document.getElementById('view-content').innerHTML = '<div id="chat-container" class="chat-container"></div>';
-        document.getElementById('header-title').textContent = 'Чат с ' + targetId;
-        // Здесь можно запросить историю ЛС у сервера
+        ws.send(JSON.stringify({ type: 'get_history', chatId: currentChat }));
     }
 
     document.getElementById('message-input').onkeypress = (e) => { if(e.key === 'Enter') send() };
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
 </body>
 </html>
