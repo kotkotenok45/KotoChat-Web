@@ -1,5 +1,10 @@
-const CACHE_NAME = 'KotoChatCache-v2';
-const ASSETS = ['./', './index.html', './manifest.json'];
+const CACHE_NAME = 'KotoChatCache-v1'; // Изменили версию для сброса старого кэша
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './logo.png'
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
