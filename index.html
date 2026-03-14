@@ -6,7 +6,7 @@
     <title>KotoChat</title>
     <style>
         :root { --bg: #000; --panel: #1c1c1e; --accent: #0a84ff; --border: #38383a; --msg-in: #262629; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { margin: 0; background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
         /* Анимации */
@@ -15,52 +15,55 @@
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(10,132,255,0.4); } 70% { box-shadow: 0 0 0 20px rgba(10,132,255,0); } 100% { box-shadow: 0 0 0 0 rgba(10,132,255,0); } }
 
         header { height: 60px; background: var(--panel); display: flex; align-items: center; padding: 0 15px; border-bottom: 1px solid var(--border); justify-content: space-between; z-index: 10; }
-        #view-content { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+        #view-content { flex: 1; overflow-y: auto; scroll-behavior: smooth; background: var(--bg); }
         
         .nav-bar { height: 65px; background: var(--panel); display: flex; border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #8e8e93; cursor: pointer; position: relative; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #8e8e93; cursor: pointer; position: relative; transition: 0.2s; }
         .nav-item.active { color: var(--accent); }
 
         .chat-container { padding: 15px; display: flex; flex-direction: column; gap: 8px; }
-        .msg { padding: 10px 14px; border-radius: 18px; max-width: 80%; font-size: 16px; animation: slideUp 0.2s ease-out; position: relative; }
+        .msg { padding: 10px 14px; border-radius: 18px; max-width: 80%; font-size: 16px; animation: slideUp 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); position: relative; }
         .msg.in { align-self: flex-start; background: var(--msg-in); border-bottom-left-radius: 4px; }
-        .msg.out { align-self: flex-end; background: var(--accent); border-bottom-right-radius: 4px; }
+        .msg.out { align-self: flex-end; background: var(--accent); border-bottom-right-radius: 4px; color: white; }
         
-        .list-item { padding: 12px 15px; display: flex; align-items: center; gap: 12px; border-bottom: 0.5px solid var(--border); animation: fadeIn 0.3s; }
-        .avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
+        .list-item { padding: 12px 15px; display: flex; align-items: center; gap: 12px; border-bottom: 0.5px solid var(--border); transition: 0.2s; }
+        .list-item:active { background: #2c2c2e; }
+        .avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: white; flex-shrink: 0; }
 
         #input-area { padding: 10px 15px; background: var(--panel); display: none; gap: 10px; align-items: center; border-top: 1px solid var(--border); }
-        #message-input { flex: 1; background: #000; border: 1px solid var(--border); color: #fff; padding: 10px 15px; border-radius: 20px; }
+        #message-input { flex: 1; background: #000; border: 1px solid var(--border); color: #fff; padding: 10px 15px; border-radius: 20px; font-size: 16px; }
 
         /* Экран звонка */
-        #call-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #call-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; animation: fadeIn 0.3s; }
         .call-anim { width: 100px; height: 100px; background: var(--accent); border-radius: 50%; margin-bottom: 20px; animation: pulse 1.5s infinite; display: flex; align-items: center; justify-content: center; font-size: 40px; }
-        .call-btns { display: flex; gap: 30px; margin-top: 40px; }
-        .c-btn { width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 24px; color: #fff; cursor: pointer; }
+        .call-btns { display: flex; gap: 40px; margin-top: 40px; }
+        .c-btn { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 24px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
         #auth-screen { position: fixed; inset: 0; background: #000; z-index: 2000; display: flex; align-items: center; justify-content: center; }
-        .auth-card { background: var(--panel); padding: 25px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; }
-        .auth-card input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid var(--border); background: #000; color: #fff; }
-        .auth-card button { width: 100%; padding: 12px; border-radius: 10px; border: none; background: var(--accent); color: #fff; font-weight: bold; margin-top: 10px; }
+        .auth-card { background: var(--panel); padding: 30px; border-radius: 25px; width: 85%; max-width: 320px; text-align: center; border: 1px solid var(--border); }
+        .auth-card input { width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 1px solid var(--border); background: #000; color: #fff; font-size: 16px; }
+        .auth-card button { width: 100%; padding: 14px; border-radius: 12px; border: none; background: var(--accent); color: #fff; font-weight: bold; margin-top: 10px; font-size: 16px; }
+        
+        .badge { position: absolute; top: 8px; right: 25%; background: #ff3b30; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="auth-screen">
     <div class="auth-card">
-        <h2>KotoChat</h2>
+        <h2 style="margin-top:0">KotoChat</h2>
         <input type="text" id="reg-id" placeholder="ID (логин)">
-        <input type="text" id="reg-name" placeholder="Имя" style="display:none">
+        <input type="text" id="reg-name" placeholder="Ваше имя" style="display:none">
         <input type="password" id="reg-pass" placeholder="Пароль">
         <button onclick="handleAuth()" id="auth-btn">Войти</button>
-        <p onclick="toggleAuth()" id="auth-link" style="color:var(--accent); font-size:13px; cursor:pointer; margin-top:15px;">Нет аккаунта? Создать</p>
+        <p onclick="toggleAuth()" id="auth-link" style="color:var(--accent); font-size:14px; cursor:pointer; margin-top:15px;">Нет аккаунта? Создать</p>
     </div>
 </div>
 
 <div id="call-overlay">
     <div class="call-anim" id="call-type-icon">📞</div>
     <h2 id="caller-name">Имя...</h2>
-    <div id="video-preview" style="display:none; width:80%; height:40%; background:#222; border-radius:15px; margin:10px 0;"></div>
+    <p id="call-status" style="color:#8e8e93">Звонок...</p>
     <div class="call-btns">
         <button class="c-btn" style="background:#ff3b30;" onclick="endCall()">✕</button>
         <button class="c-btn" id="answer-btn" style="background:#32d74b;" onclick="acceptCall()">✔</button>
@@ -68,11 +71,11 @@
 </div>
 
 <header>
-    <div id="back-btn" style="display:none; color:var(--accent); font-weight:bold; cursor:pointer;" onclick="showTab('dialogs')">← Назад</div>
-    <div id="header-title" style="font-weight:bold;">KotoChat</div>
-    <div id="call-actions" style="display:none; gap:15px;">
-        <span onclick="makeCall('audio')" style="cursor:pointer; font-size:18px;">📞</span>
-        <span onclick="makeCall('video')" style="cursor:pointer; font-size:18px;">📹</span>
+    <div id="back-btn" style="display:none; color:var(--accent); font-weight:bold; cursor:pointer; font-size:17px;" onclick="showTab('dialogs')">← Назад</div>
+    <div id="header-title" style="font-weight:bold; font-size:18px;">KotoChat</div>
+    <div id="call-actions" style="display:none; gap:20px;">
+        <span onclick="makeCall('audio')" style="cursor:pointer; font-size:22px;">📞</span>
+        <span onclick="makeCall('video')" style="cursor:pointer; font-size:22px;">📹</span>
     </div>
 </header>
 
@@ -80,56 +83,97 @@
 
 <div id="input-area">
     <input type="text" id="message-input" placeholder="Сообщение..." autocomplete="off">
-    <button onclick="sendMsg()" style="background:none; border:none; color:var(--accent); font-weight:bold;">ОТПР.</button>
+    <button onclick="sendMsg()" style="background:none; border:none; color:var(--accent); font-weight:bold; font-size:16px; padding:5px 10px;">ОТПР.</button>
 </div>
 
 <nav class="nav-bar">
     <div class="nav-item active" data-tab="dialogs" onclick="showTab('dialogs')">
-        <span style="font-size:20px;">💬</span>Диалоги<div id="badge" style="display:none; position:absolute; top:8px; right:20%; background:#ff3b30; color:#fff; font-size:10px; padding:2px 5px; border-radius:10px;">0</div>
+        <span style="font-size:24px;">💬</span>Диалоги<div id="badge" class="badge" style="display:none;">0</div>
     </div>
     <div class="nav-item" data-tab="profile" onclick="showTab('profile')">
-        <span style="font-size:20px;">👤</span>Профиль
+        <span style="font-size:24px;">👤</span>Профиль
     </div>
 </nav>
 
 <script>
     let ws;
-    let myId = localStorage.getItem('k_id'), myName = localStorage.getItem('k_n'), myPass = localStorage.getItem('k_p');
+    // Загружаем данные из памяти для авто-входа
+    let myId = localStorage.getItem('k_id'), 
+        myName = localStorage.getItem('k_n'), 
+        myPass = localStorage.getItem('k_p');
+    
     let currentChat = null, isReg = false, myFriends = [], myRequests = [];
     let activeCallerId = null;
 
     function connect() {
         ws = new WebSocket('wss://kotkotenok43-kotochat-server.hf.space');
-        ws.onopen = () => { if(myId) ws.send(JSON.stringify({type:'login', userId:myId, password:myPass})); };
+        
+        ws.onopen = () => { 
+            // Если есть сохраненные данные — заходим автоматически
+            if(myId && myPass) {
+                ws.send(JSON.stringify({type:'login', userId:myId, password:myPass})); 
+            }
+        };
+
         ws.onmessage = (e) => {
             const res = JSON.parse(e.data);
+            
             if(res.type === 'auth_success') {
                 myId = res.userId; myName = res.name;
-                localStorage.setItem('k_id', myId); localStorage.setItem('k_n', myName);
+                localStorage.setItem('k_id', myId); 
+                localStorage.setItem('k_n', myName);
+                // Пароль сохраняем в handleAuth
                 document.getElementById('auth-screen').style.display = 'none';
                 showTab('dialogs');
             }
+            
             if(res.type === 'user_sync') {
-                myFriends = res.friends; myRequests = res.requests;
-                updateUI();
+                myFriends = res.friends; 
+                myRequests = res.requests;
+                updateBadge();
+                if(currentChat === null) renderDialogs();
             }
+
             if(res.type === 'search_result') handleSearch(res);
+
             if(res.type === 'history') {
-                const c = document.getElementById('chat-container'); c.innerHTML = '';
-                res.messages.forEach(renderMsg); scrollToBottom();
+                const c = document.getElementById('chat-container'); 
+                if(c) {
+                    c.innerHTML = '';
+                    res.messages.forEach(renderMsg); 
+                    scrollToBottom();
+                }
             }
+
             if(res.type === 'text') {
-                if(res.chatId === currentChat) { renderMsg(res); scrollToBottom(); }
+                if(res.chatId === currentChat) { 
+                    renderMsg(res); 
+                    scrollToBottom(); 
+                }
             }
+
             if(res.type === 'incoming_call') {
                 activeCallerId = res.fromId;
                 document.getElementById('call-overlay').style.display = 'flex';
                 document.getElementById('caller-name').textContent = res.fromName;
+                document.getElementById('answer-btn').style.display = 'flex';
                 document.getElementById('call-type-icon').textContent = res.callType === 'video' ? '📹' : '📞';
+                document.getElementById('call-status').textContent = 'Входящий вызов...';
             }
+
             if(res.type === 'call_cancelled') endCall();
-            if(res.type === 'error') alert(res.text);
+            
+            if(res.type === 'error') {
+                alert(res.text);
+                // Если ошибка входа — сбрасываем память
+                if(res.text.includes("входа")) {
+                    localStorage.clear();
+                    document.getElementById('auth-screen').style.display = 'flex';
+                }
+            }
         };
+
+        ws.onclose = () => setTimeout(connect, 2000);
     }
     connect();
 
@@ -148,38 +192,69 @@
             renderDialogs();
         } else if(t === 'profile') {
             document.getElementById('header-title').textContent = 'Профиль';
-            cont.innerHTML = `<div style="padding:30px; text-align:center;">
-                <div class="avatar" style="margin: 0 auto 15px; width:80px; height:80px; font-size:30px;">${myName[0]}</div>
-                <h3>${myName}</h3><p style="color:#8e8e93">ID: ${myId}</p>
-                <button onclick="localStorage.clear(); location.reload();" style="background:#ff3b30; color:#fff; border:none; padding:12px; border-radius:10px; width:100%; margin-top:20px;">Выйти</button>
-            </div>`;
+            cont.innerHTML = `
+                <div style="padding:40px 20px; text-align:center; animation: fadeIn 0.3s;">
+                    <div class="avatar" style="margin: 0 auto 20px; width:100px; height:100px; font-size:40px;">${myName ? myName[0].toUpperCase() : '?'}</div>
+                    <h2 style="margin:0">${myName}</h2>
+                    <p style="color:#8e8e93; margin-top:5px;">ID: ${myId}</p>
+                    <button onclick="logout()" style="background:#ff3b30; color:#fff; border:none; padding:15px; border-radius:15px; width:100%; margin-top:30px; font-weight:bold;">ВЫЙТИ ИЗ АККАУНТА</button>
+                </div>`;
         }
     }
 
     function renderDialogs() {
-        let html = `<div style="padding:15px;"><div style="display:flex; gap:10px;">
-            <input type="text" id="find-id" placeholder="Поиск по ID..." style="flex:1; background:#1c1c1e; border:1px solid #38383a; color:#fff; padding:10px; border-radius:10px;">
-            <button onclick="ws.send(JSON.stringify({type:'search_user', targetId:document.getElementById('find-id').value}))" style="background:var(--accent); border:none; border-radius:10px; color:#fff; padding:0 15px;">Найти</button>
-        </div><div id="search-box"></div></div>`;
+        let html = `
+            <div style="padding:15px; animation: fadeIn 0.3s;">
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <input type="text" id="find-id" placeholder="Поиск по ID..." style="flex:1; background:#1c1c1e; border:1px solid #38383a; color:#fff; padding:12px; border-radius:12px;">
+                    <button onclick="searchUser()" style="background:var(--accent); border:none; border-radius:12px; color:#fff; padding:0 20px; font-weight:bold;">Найти</button>
+                </div>
+                <div id="search-box"></div>
+            </div>`;
 
         if(myRequests.length > 0) {
-            html += `<div style="padding:5px 15px; font-size:12px; color:#8e8e93;">ЗАПРОСЫ</div>`;
+            html += `<div style="padding:5px 15px; font-size:12px; color:#8e8e93; font-weight:bold;">ЗАПРОСЫ В ДРУЗЬЯ</div>`;
             myRequests.forEach(r => {
-                html += `<div class="list-item"><div class="avatar" style="background:#ff9500">${r.name[0]}</div><div style="flex:1"><b>${r.name}</b></div><button onclick="ws.send(JSON.stringify({type:'accept_request', targetId:'${r.id}'}))" style="background:#32d74b; border:none; color:#fff; padding:5px 10px; border-radius:8px;">Принять</button></div>`;
+                html += `
+                    <div class="list-item">
+                        <div class="avatar" style="background:#ff9500">${r.name[0].toUpperCase()}</div>
+                        <div style="flex:1"><b>${r.name}</b></div>
+                        <button onclick="ws.send(JSON.stringify({type:'accept_request', targetId:'${r.id}'}))" style="background:#32d74b; border:none; color:#fff; padding:8px 15px; border-radius:10px; font-weight:bold;">Принять</button>
+                    </div>`;
             });
         }
 
-        html += `<div style="padding:5px 15px; font-size:12px; color:#8e8e93;">ВАШИ ЧАТЫ</div>
-        <div class="list-item" onclick="openChat('global', 'Общий чат')">
-            <div class="avatar" style="background:linear-gradient(45deg, #0a84ff, #32d74b)">🌍</div><div><b>Общий чат</b><br><small style="color:#8e8e93">Все пользователи</small></div>
-        </div>`;
+        html += `<div style="padding:15px 15px 5px; font-size:12px; color:#8e8e93; font-weight:bold;">ВАШИ ДИАЛОГИ</div>
+            <div class="list-item" onclick="openChat('global', 'Общий чат')">
+                <div class="avatar" style="background:linear-gradient(45deg, #0a84ff, #32d74b)">🌍</div>
+                <div><b>Общий чат</b><br><small style="color:#8e8e93">Чат для всех пользователей</small></div>
+            </div>`;
 
         myFriends.forEach(f => {
-            html += `<div class="list-item" onclick="openChat('${[myId, f.id].sort().join('_')}', '${f.name}')">
-                <div class="avatar">${f.name[0]}</div><div><b>${f.name}</b><br><small style="color:#8e8e93">Нажмите, чтобы написать</small></div>
-            </div>`;
+            html += `
+                <div class="list-item" onclick="openChat('${[myId, f.id].sort().join('_')}', '${f.name}')">
+                    <div class="avatar">${f.name[0].toUpperCase()}</div>
+                    <div><b>${f.name}</b><br><small style="color:#8e8e93">Нажмите, чтобы открыть чат</small></div>
+                </div>`;
         });
         document.getElementById('view-content').innerHTML = html;
+    }
+
+    function searchUser() {
+        const val = document.getElementById('find-id').value.trim();
+        if(!val) return;
+        ws.send(JSON.stringify({type:'search_user', targetId: val}));
+    }
+
+    function handleSearch(res) {
+        const b = document.getElementById('search-box');
+        if(!res.found) return b.innerHTML = '<p style="text-align:center; color:#ff3b30; animation: fadeIn 0.3s;">Пользователь не найден</p>';
+        b.innerHTML = `
+            <div class="list-item" style="background:#1c1c1e; border-radius:15px; border:1px solid var(--border); animation: slideUp 0.3s ease;">
+                <div class="avatar">${res.targetName[0].toUpperCase()}</div>
+                <div style="flex:1"><b>${res.targetName}</b><br><small style="color:#8e8e93">ID: ${res.targetId}</small></div>
+                <button onclick="ws.send(JSON.stringify({type:'send_request', targetId:'${res.targetId}'}))" style="background:var(--accent); border:none; color:#fff; padding:10px 15px; border-radius:10px; font-weight:bold;">Добавить</button>
+            </div>`;
     }
 
     function openChat(id, name) {
@@ -187,57 +262,85 @@
         document.getElementById('header-title').textContent = name;
         document.getElementById('back-btn').style.display = 'block';
         document.getElementById('input-area').style.display = 'flex';
-        if(id !== 'global') document.getElementById('call-actions').style.display = 'flex';
+        document.getElementById('call-actions').style.display = (id === 'global') ? 'none' : 'flex';
         document.getElementById('view-content').innerHTML = '<div id="chat-container" class="chat-container"></div>';
         ws.send(JSON.stringify({type:'get_history', chatId: id}));
     }
 
     function renderMsg(m) {
-        const res = document.getElementById('chat-container'); if(!res) return;
+        const res = document.getElementById('chat-container'); 
+        if(!res) return;
         const d = document.createElement('div');
         const isMe = m.senderId === myId;
         d.className = `msg ${isMe ? 'out' : 'in'}`;
-        d.innerHTML = `${!isMe ? `<small style="display:block; color:var(--accent); font-weight:bold; margin-bottom:4px;">${m.senderName}</small>` : ''}${m.text}`;
+        d.innerHTML = `${!isMe ? `<small style="display:block; color:#0a84ff; font-weight:bold; margin-bottom:4px; font-size:11px;">${m.senderName}</small>` : ''}${m.text}`;
         res.appendChild(d);
+    }
+
+    function sendMsg() {
+        const i = document.getElementById('message-input');
+        if(!i.value.trim()) return;
+        ws.send(JSON.stringify({type:'text', chatId: currentChat, text: i.value, senderId: myId, senderName: myName}));
+        i.value = '';
     }
 
     function makeCall(type) {
         const target = currentChat.replace(myId, '').replace('_', '');
         ws.send(JSON.stringify({type:'call_user', targetId: target, callType: type}));
         document.getElementById('call-overlay').style.display = 'flex';
-        document.getElementById('caller-name').textContent = "Звоним...";
+        document.getElementById('caller-name').textContent = "Вызов...";
         document.getElementById('answer-btn').style.display = 'none';
+        document.getElementById('call-status').textContent = 'Ожидание ответа...';
     }
 
-    function endCall() { document.getElementById('call-overlay').style.display = 'none'; }
-    function acceptCall() { alert("Соединение установлено (WebRTC в разработке)"); endCall(); }
+    function acceptCall() { 
+        alert("Голосовая связь устанавливается..."); 
+        endCall(); 
+    }
     
-    function sendMsg() {
-        const i = document.getElementById('message-input'); if(!i.value.trim()) return;
-        ws.send(JSON.stringify({type:'text', chatId: currentChat, text: i.value, senderId: myId, senderName: myName}));
-        i.value = '';
-    }
-
-    function handleSearch(res) {
-        const b = document.getElementById('search-box');
-        if(!res.found) return b.innerHTML = '<p style="text-align:center; color:#ff3b30">Не найден</p>';
-        b.innerHTML = `<div class="list-item" style="background:#1c1c1e; border-radius:15px; margin-top:10px;">
-            <div class="avatar">${res.targetName[0]}</div><div style="flex:1"><b>${res.targetName}</b></div>
-            <button onclick="ws.send(JSON.stringify({type:'send_request', targetId:'${res.targetId}'}))" style="background:var(--accent); border:none; color:#fff; padding:8px 12px; border-radius:10px;">Добавить</button>
-        </div>`;
+    function endCall() { 
+        document.getElementById('call-overlay').style.display = 'none'; 
     }
 
     function handleAuth() {
-        const id = document.getElementById('reg-id').value, pass = document.getElementById('reg-pass').value, name = document.getElementById('reg-name').value;
-        myPass = pass; ws.send(JSON.stringify({type: isReg?'register':'login', userId:id, password:pass, name:name||id}));
+        const id = document.getElementById('reg-id').value.trim();
+        const pass = document.getElementById('reg-pass').value.trim();
+        const name = document.getElementById('reg-name').value.trim();
+        if(!id || !pass) return alert("Заполните поля!");
+        
+        myPass = pass;
+        localStorage.setItem('k_p', pass); // Сохраняем пароль для авто-входа
+        
+        ws.send(JSON.stringify({type: isReg?'register':'login', userId:id, password:pass, name:name||id}));
     }
-    function toggleAuth() { isReg = !isReg; document.getElementById('reg-name').style.display = isReg?'block':'none'; document.getElementById('auth-btn').textContent = isReg?'Создать':'Войти'; }
-    function updateUI() { 
-        const b = document.getElementById('badge'); 
-        if(myRequests.length > 0) { b.textContent = myRequests.length; b.style.display = 'block'; } else b.style.display = 'none';
-        if(currentChat === null) renderDialogs(); 
+
+    function toggleAuth() { 
+        isReg = !isReg; 
+        document.getElementById('reg-name').style.display = isReg ? 'block' : 'none'; 
+        document.getElementById('auth-btn').textContent = isReg ? 'Создать аккаунт' : 'Войти';
+        document.getElementById('auth-link').textContent = isReg ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Создать';
     }
-    function scrollToBottom() { const v = document.getElementById('view-content'); v.scrollTop = v.scrollHeight; }
+
+    function updateBadge() {
+        const b = document.getElementById('badge');
+        if(myRequests.length > 0) {
+            b.textContent = myRequests.length;
+            b.style.display = 'block';
+        } else b.style.display = 'none';
+    }
+
+    function logout() {
+        localStorage.clear();
+        location.reload();
+    }
+
+    function scrollToBottom() { 
+        const v = document.getElementById('view-content'); 
+        v.scrollTop = v.scrollHeight; 
+    }
+
+    // Отправка по Enter
+    document.getElementById('message-input').onkeypress = (e) => { if(e.key === 'Enter') sendMsg() };
 </script>
 </body>
 </html>
