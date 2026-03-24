@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KotoChat</title>
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#020617">
     <style>
         :root {
@@ -12,7 +11,6 @@
             --bg-side: #0f172a;
             --accent: #3b82f6;
             --text-primary: #f8fafc;
-            --text-dim: #94a3b8;
             --danger: #ef4444;
             --success: #22c55e;
             --border: #1e293b;
@@ -20,17 +18,15 @@
 
         body {
             margin: 0;
-            padding: 0;
             background: var(--bg-main);
             color: var(--text-primary);
             font-family: 'Inter', -apple-system, sans-serif;
             display: flex;
             height: 100vh;
-            overflow: hidden;
         }
 
         #sidebar {
-            width: 320px;
+            width: 300px;
             background: var(--bg-side);
             border-right: 1px solid var(--border);
             display: flex;
@@ -38,132 +34,126 @@
         }
 
         .sidebar-header {
-            padding: 1.5rem;
+            padding: 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             border-bottom: 1px solid var(--border);
         }
 
-        .status-dot {
-            width: 12px;
-            height: 12px;
+        .status-indicator {
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background: var(--danger);
-            box-shadow: 0 0 5px var(--danger);
+            transition: 0.3s;
         }
 
         .status-online { 
             background: var(--success); 
-            box-shadow: 0 0 8px var(--success);
+            box-shadow: 0 0 10px var(--success); 
         }
 
-        .list-container {
+        .channel-list {
             flex: 1;
-            overflow-y: auto;
             padding: 15px;
+            overflow-y: auto;
         }
 
-        .item-card {
+        .channel-item {
             padding: 14px;
-            border-radius: 4px;
-            cursor: pointer;
             margin-bottom: 8px;
+            cursor: pointer;
+            border-radius: 4px;
             background: rgba(255,255,255,0.02);
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
             border: 1px solid transparent;
-            transition: 0.2s;
         }
 
-        .item-card:hover { 
-            background: rgba(255,255,255,0.07); 
-            border-color: var(--border);
-        }
+        .channel-item:hover { background: var(--border); }
+        .active-ch { border-color: var(--accent); background: rgba(59, 130, 246, 0.1); }
 
-        .active-room {
-            border-color: var(--accent);
-            background: rgba(59, 130, 246, 0.1);
-        }
-
-        #main-chat {
+        #chat-window {
             flex: 1;
             display: flex;
             flex-direction: column;
         }
 
-        #view-header {
-            padding: 1rem 2rem;
+        #chat-header {
+            padding: 15px 25px;
             background: var(--bg-side);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
             border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        #video-grid {
+        #video-area {
             display: none;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 15px;
             padding: 15px;
             background: #000;
         }
 
-        video {
-            width: 100%;
-            aspect-ratio: 16/9;
-            object-fit: cover;
-            border-radius: 6px;
-            background: #1e293b;
+        video { 
+            width: 100%; 
+            border-radius: 4px; 
+            background: #111;
+            transform: scaleX(-1);
         }
 
-        #messages-flow {
+        #messages {
             flex: 1;
+            padding: 25px;
             overflow-y: auto;
-            padding: 2rem;
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
 
-        .message {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 4px;
+        .msg-box {
             background: var(--bg-side);
-            border-left: 3px solid var(--accent);
+            padding: 14px;
+            border-radius: 4px;
+            max-width: 75%;
+            border: 1px solid var(--border);
             align-self: flex-start;
         }
 
-        .controls {
+        .input-area {
             padding: 25px;
-            background: var(--bg-main);
             display: flex;
             gap: 12px;
             border-top: 1px solid var(--border);
+            background: var(--bg-main);
         }
 
         input {
+            flex: 1;
             background: #0f172a;
             border: 1px solid var(--border);
             color: white;
             padding: 14px;
             border-radius: 4px;
-            flex: 1;
             outline: none;
         }
 
         button {
-            padding: 10px 24px;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
             background: var(--accent);
             color: white;
-            transition: opacity 0.2s;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 700;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-size: 12px;
         }
 
-        button:hover { opacity: 0.9; }
-        .call-btn { background: var(--success); }
+        .btn-call { background: var(--success); }
     </style>
 </head>
 <body>
@@ -172,44 +162,42 @@
     <div class="sidebar-header">
         <div style="display:flex; align-items:center; gap:12px;">
             <img src="icon.png" width="28" height="28" alt="K">
-            <span style="letter-spacing: 1px; font-weight: 800;">KOTOCHAT</span>
+            <span style="font-weight:900; letter-spacing:1px;">KotoChat</span>
         </div>
-        <div id="status-indicator" class="status-dot"></div>
+        <div id="ind" class="status-indicator"></div>
     </div>
-    
-    <div class="list-container">
-        <div id="groups-list">
-            <div class="item-card active-room" onclick="joinRoom('main-hq', this)">[ СЕРВЕР: ГЛАВНЫЙ ]</div>
-        </div>
-        <button onclick="createNewChannel()" style="width:100%; margin-top:15px; background: transparent; border: 1px dashed var(--border);">+ СОЗДАТЬ КАНАЛ</button>
+    <div class="channel-list" id="ch-list">
+        <div class="channel-item active-ch" id="default-ch" onclick="switchChannel('MAIN')"># MAIN</div>
+    </div>
+    <div style="padding:15px;">
+        <button onclick="addChannel()" style="width:100%; background:transparent; border:1px solid var(--border);">+ СОЗДАТЬ СЕРВЕР</button>
     </div>
 </div>
 
-<div id="main-chat">
-    <div id="view-header">
-        <h3 id="current-title">ГЛАВНЫЙ</h3>
-        <button class="call-btn" id="call-trigger">ЗВОНОК</button>
+<div id="chat-window">
+    <div id="chat-header">
+        <span id="title" style="font-weight:800; letter-spacing:1px;">СЕРВЕР: MAIN</span>
+        <button class="btn-call" id="call-btn" onclick="toggleVideo()">ЗВОНОК</button>
     </div>
-
-    <div id="video-grid"></div>
-
-    <div id="messages-flow"></div>
-
-    <div class="controls">
-        <input type="text" id="msg-field" placeholder="Введите сообщение в защищенный канал...">
-        <button onclick="sendData()">ОТПРАВИТЬ</button>
+    <div id="video-area"></div>
+    <div id="messages"></div>
+    <div class="input-area">
+        <input type="text" id="minput" placeholder="Введите сообщение...">
+        <button onclick="sendMsg()">ОТПРАВИТЬ</button>
     </div>
 </div>
 
 <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 <script>
     let peer;
-    let activeConnections = [];
+    let currentRoom = 'MAIN';
     const serverHost = 'kotkotenok43-kotochat-server.hf.space';
-    const indicator = document.getElementById('status-indicator');
+    const indicator = document.getElementById('ind');
 
-    function connectToServer() {
-        peer = new Peer('koto-' + Math.random().toString(36).substr(2, 5), {
+    function initKotoChat() {
+        const userId = 'koto-' + Math.random().toString(36).substr(2, 6);
+        
+        peer = new Peer(userId, {
             host: serverHost,
             port: 443,
             path: '/myapp',
@@ -220,103 +208,112 @@
             indicator.classList.add('status-online');
         });
 
-        peer.on('error', () => {
+        peer.on('error', (err) => {
+            console.error(err);
             indicator.classList.remove('status-online');
         });
 
         peer.on('connection', (conn) => {
             conn.on('data', (data) => {
-                pushMessage(data.user, data.msg);
+                if(data.room === currentRoom) {
+                    renderMessage(data.user, data.msg);
+                }
             });
         });
 
         peer.on('call', (call) => {
-            if(confirm("Входящий вызов. Принять?")) {
+            if(confirm("Входящий звонок в KotoChat. Принять?")) {
                 navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(stream => {
+                    document.getElementById('video-area').style.display = 'grid';
                     call.answer(stream);
-                    handleStream(call);
+                    setupVideo(call);
                 });
             }
         });
     }
 
-    function sendData() {
-        const input = document.getElementById('msg-field');
+    function sendMsg() {
+        const input = document.getElementById('minput');
         if(!input.value) return;
         
-        const payload = { user: peer.id, msg: input.value };
-        pushMessage('Вы', input.value);
+        renderMessage('ВЫ', input.value);
         
-        activeConnections.forEach(conn => conn.send(payload));
+        const payload = { 
+            room: currentRoom, 
+            user: peer.id.split('-')[1], 
+            msg: input.value 
+        };
+
+        Object.values(peer.connections).forEach(conns => {
+            conns.forEach(c => c.send(payload));
+        });
+        
         input.value = '';
     }
 
-    function pushMessage(user, text) {
-        const flow = document.getElementById('messages-flow');
-        const msg = document.createElement('div');
-        msg.className = 'message';
-        msg.innerHTML = `<small style="color:var(--text-dim); font-size:10px">${user}</small><div style="margin-top:5px">${text}</div>`;
-        flow.appendChild(msg);
-        flow.scrollTop = flow.scrollHeight;
+    function renderMessage(user, text) {
+        const container = document.getElementById('messages');
+        const div = document.createElement('div');
+        div.className = 'msg-box';
+        div.innerHTML = `<small style="color:var(--accent); font-weight:bold;">${user.toUpperCase()}</small><div style="margin-top:4px;">${text}</div>`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
     }
 
-    function createNewChannel() {
-        const name = prompt("Введите идентификатор канала:");
+    function addChannel() {
+        const name = prompt("Название нового сервера:");
         if(name) {
-            const list = document.getElementById('groups-list');
+            const list = document.getElementById('ch-list');
             const div = document.createElement('div');
-            div.className = 'item-card';
-            div.innerText = `[ КАНАЛ: ${name.toUpperCase()} ]`;
-            div.onclick = function() { joinRoom(name, this); };
+            div.className = 'channel-item';
+            div.innerText = `# ${name.toUpperCase()}`;
+            div.onclick = () => switchChannel(name);
             list.appendChild(div);
+            switchChannel(name);
         }
     }
 
-    function joinRoom(id, el) {
-        document.querySelectorAll('.item-card').forEach(item => item.classList.remove('active-room'));
-        el.classList.add('active-room');
-        document.getElementById('current-title').innerText = id.toUpperCase();
-        document.getElementById('messages-flow').innerHTML = '';
+    function switchChannel(name) {
+        currentRoom = name;
+        document.querySelectorAll('.channel-item').forEach(i => i.classList.remove('active-ch'));
+        document.getElementById('title').innerText = `СЕРВЕР: ${name.toUpperCase()}`;
+        document.getElementById('messages').innerHTML = '';
         
-        const targetId = prompt("Введите ID собеседника для подключения к каналу (его ID в углу сообщения):");
-        if(targetId) {
-            const conn = peer.connect(targetId);
-            activeConnections.push(conn);
+        const target = prompt("Чтобы подключиться к участнику на этом сервере, введите его позывной (ID):");
+        if(target) {
+            peer.connect(target);
         }
     }
 
-    document.getElementById('call-trigger').onclick = async () => {
-        const targetId = prompt("Введите ID для звонка:");
-        if(targetId) {
-            const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
-            showLocalVideo(stream);
-            const call = peer.call(targetId, stream);
-            handleStream(call);
-        }
-    };
+    async function toggleVideo() {
+        const area = document.getElementById('video-area');
+        const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+        area.style.display = 'grid';
+        
+        const localVid = document.createElement('video');
+        localVid.srcObject = stream;
+        localVid.muted = true;
+        localVid.play();
+        area.appendChild(localVid);
 
-    function showLocalVideo(stream) {
-        const grid = document.getElementById('video-grid');
-        grid.style.display = 'grid';
-        const v = document.createElement('video');
-        v.srcObject = stream;
-        v.muted = true;
-        v.play();
-        grid.appendChild(v);
+        const target = prompt("Кому позвонить? (Введите ID участника)");
+        if(target) {
+            const call = peer.call(target, stream);
+            setupVideo(call);
+        }
     }
 
-    function handleStream(call) {
-        call.on('stream', userStream => {
-            const grid = document.getElementById('video-grid');
-            grid.style.display = 'grid';
-            const v = document.createElement('video');
-            v.srcObject = userStream;
-            v.play();
-            grid.appendChild(v);
+    function setupVideo(call) {
+        call.on('stream', remoteStream => {
+            const area = document.getElementById('video-area');
+            const remoteVid = document.createElement('video');
+            remoteVid.srcObject = remoteStream;
+            remoteVid.play();
+            area.appendChild(remoteVid);
         });
     }
 
-    window.onload = connectToServer;
+    window.onload = initKotoChat;
 </script>
 </body>
 </html>
