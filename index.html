@@ -2,315 +2,277 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KotoChat</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kotochat</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="./icon.png">
-    <link rel="apple-touch-icon" href="./icon.png">
+    <meta name="theme-color" content="#020617">
     <style>
-        :root { --bg: #000; --panel: #1c1c1e; --accent: #0a84ff; --border: #38383a; --msg-in: #262629; --text-gray: #8e8e93; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
-        body { background: var(--bg); color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: fixed; width: 100%; }
+        :root {
+            --bg-main: #020617;
+            --bg-side: #0f172a;
+            --accent: #3b82f6;
+            --text-primary: #f8fafc;
+            --text-dim: #94a3b8;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --border: #1e293b;
+        }
 
-        header { padding-top: env(safe-area-inset-top); background: rgba(28,28,30,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); z-index: 100; flex-shrink: 0; }
-        .header-content { height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
-        .header-btn { width: 60px; color: var(--accent); font-size: 16px; font-weight: 500; cursor: pointer; }
-        .header-title-box { text-align: center; flex: 1; }
-        .header-title { font-weight: 600; font-size: 17px; }
-        .header-subtitle { font-size: 11px; color: var(--text-gray); }
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-        #view-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg); position: relative; }
-        
-        #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; }
-        .auth-form { width: 85%; max-width: 340px; text-align: center; background: var(--panel); padding: 30px 20px; border-radius: 20px; }
-        .auth-form input { width: 100%; padding: 15px; margin: 8px 0; border-radius: 12px; border: 1px solid var(--border); background: #000; color: #fff; font-size: 16px; }
-        
-        /* Главная кнопка Входа */
-        .btn-primary { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--accent); color: #fff; font-weight: bold; font-size: 16px; margin-top: 15px; cursor: pointer; }
-        
-        /* Исправленная кнопка переключения! */
-        .btn-text { background: none; border: none; color: var(--accent); margin-top: 20px; font-size: 15px; font-weight: 500; cursor: pointer; width: 100%; padding: 15px; user-select: none; -webkit-user-select: none; }
+        #sidebar {
+            width: 300px;
+            background: var(--bg-side);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
 
-        .list-item { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 15px; cursor: pointer; background: var(--bg); }
-        .avatar { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #0a84ff, #005bb5); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; position: relative; flex-shrink: 0; }
-        .online-dot { position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; background: #32d74b; border: 2px solid var(--bg); border-radius: 50%; display: none; }
+        .sidebar-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
 
-        .chat-container { padding: 15px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
-        .msg { padding: 10px 14px; border-radius: 18px; max-width: 75%; font-size: 16px; word-wrap: break-word; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        .msg.in { align-self: flex-start; background: var(--msg-in); border-bottom-left-radius: 4px; }
-        .msg.out { align-self: flex-end; background: var(--accent); border-bottom-right-radius: 4px; color: white; }
-        .msg img { max-width: 100%; border-radius: 10px; margin-top: 5px; }
-        .msg audio { max-width: 200px; height: 35px; margin-top: 5px; }
-        .msg-time { font-size: 10px; opacity: 0.7; display: block; text-align: right; margin-top: 4px; }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--danger);
+            transition: background 0.3s ease;
+        }
 
-        #input-area { background: var(--panel); padding: 10px 15px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); display: none; align-items: center; gap: 10px; border-top: 1px solid var(--border); flex-shrink: 0; }
-        #message-input { flex: 1; background: #000; border: 1px solid var(--border); color: #fff; padding: 10px 15px; border-radius: 20px; font-size: 16px; }
-        .attach-btn { background: none; border: none; font-size: 24px; color: var(--text-gray); padding: 0; cursor: pointer; }
-        .action-btn { background: var(--accent); border: none; color: #fff; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
+        .status-online { background: var(--success); }
 
-        nav { height: calc(55px + env(safe-area-inset-bottom)); background: var(--panel); display: flex; border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); flex-shrink: 0; z-index: 100; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-gray); cursor: pointer; }
-        .nav-item.active { color: var(--accent); }
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
 
-        #call-ui { position: fixed; inset: 0; background: #000; z-index: 3000; display: none; flex-direction: column; padding-top: env(safe-area-inset-top); }
-        .video-container { flex: 1; position: relative; background: #1c1c1e; display: flex; align-items: center; justify-content: center; }
-        #remote-video { width: 100%; height: 100%; object-fit: cover; }
-        #local-video { width: 110px; height: 160px; position: absolute; top: 20px; right: 20px; border-radius: 12px; border: 2px solid var(--accent); object-fit: cover; z-index: 3001; }
-        .call-controls { height: 140px; display: flex; justify-content: center; align-items: center; gap: 40px; padding-bottom: env(safe-area-inset-bottom); background: rgba(0,0,0,0.5); }
-        .call-btn { width: 70px; height: 70px; border-radius: 50%; border: none; color: #fff; font-size: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .item-card {
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 5px;
+            background: rgba(255,255,255,0.03);
+            transition: 0.2s;
+        }
+
+        .item-card:hover { background: rgba(255,255,255,0.1); }
+
+        #main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #view-header {
+            padding: 1rem 2rem;
+            background: var(--bg-side);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+
+        #video-container {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            padding: 10px;
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        #messages-flow {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 8px;
+            background: var(--bg-side);
+            align-self: flex-start;
+        }
+
+        .controls {
+            padding: 20px;
+            background: var(--bg-main);
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        input, select {
+            background: #1e293b;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            background: var(--accent);
+            color: white;
+        }
+
+        button.call-btn { background: var(--success); }
     </style>
 </head>
 <body>
 
-<div id="auth-screen">
-    <div class="auth-form">
-        <h1 id="auth-title" style="font-size: 28px; margin-bottom: 5px;">Вход</h1>
-        <p style="color: var(--text-gray); margin-bottom: 20px;">KotoChat</p>
-        
-        <input type="text" id="auth-id" placeholder="Ваш ID (логин)">
-        <input type="text" id="reg-name" placeholder="Ваше имя" style="display: none;">
-        <input type="password" id="auth-pass" placeholder="Пароль">
-        
-        <button onclick="handleAuth()" id="auth-btn" class="btn-primary">Войти</button>
-        <button id="toggle-link" class="btn-text" onclick="toggleAuth()">Нет аккаунта? Создать</button>
-    </div>
-</div>
-
-<div id="call-ui">
-    <div class="video-container">
-        <video id="remote-video" autoplay playsinline></video>
-        <video id="local-video" autoplay playsinline muted></video>
-        <div id="call-info" style="position: absolute; top: 40px; text-align: center; width: 100%; z-index: 3002; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-            <h2 id="call-name" style="font-size: 30px; margin-bottom: 5px;">Имя</h2>
-            <p id="call-status" style="font-size: 18px; color: #ddd;">Звонок...</p>
+<div id="sidebar">
+    <div class="sidebar-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <img src="icon.png" width="24" height="24">
+            <strong>KOTOCHAT</strong>
         </div>
+        <div id="connection-indicator" class="status-dot"></div>
     </div>
-    <div class="call-controls">
-        <button class="call-btn" style="background: #ff3b30;" onclick="endCall()">✕</button>
-        <button id="btn-accept" class="call-btn" style="background: #32d74b; display: none;" onclick="acceptCall()">✔</button>
-    </div>
-</div>
-
-<header>
-    <div class="header-content">
-        <div id="back-btn" class="header-btn" style="display: none;" onclick="showTab('dialogs')">◁ Назад</div>
-        <div id="empty-left" class="header-btn"></div>
-        
-        <div class="header-title-box">
-            <div id="header-title" class="header-title">Диалоги</div>
-            <div id="header-status" class="header-subtitle"></div>
-        </div>
-        
-        <div id="call-actions" class="header-btn" style="display: none; justify-content: flex-end; gap: 15px; font-size: 20px;">
-            <span onclick="startCall('audio')">📞</span>
-            <span onclick="startCall('video')">📹</span>
-        </div>
-        <div id="empty-right" class="header-btn"></div>
-    </div>
-</header>
-
-<div id="view-content"></div>
-
-<div id="input-area">
-    <label class="attach-btn">
-        📎 <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="sendImage(this)">
-    </label>
-    <input type="text" id="message-input" placeholder="Сообщение..." autocomplete="off" oninput="updateInputIcon()">
-    <button id="main-action-btn" class="action-btn" onmousedown="startVoice()" onmouseup="stopVoice()" ontouchstart="startVoice()" ontouchend="stopVoice()">🎤</button>
-</div>
-
-<nav id="bottom-nav">
-    <div class="nav-item active" data-tab="dialogs" onclick="showTab('dialogs')"><span style="font-size: 22px; margin-bottom: 2px;">💬</span>Чаты</div>
-    <div class="nav-item" data-tab="profile" onclick="showTab('profile')"><span style="font-size: 22px; margin-bottom: 2px;">⚙️</span>Настройки</div>
-</nav>
-
-<script>
-    let ws;
-    let isReg = false;
-    let myId = localStorage.getItem('k_id'), myPass = localStorage.getItem('k_p'), myName = localStorage.getItem('k_n');
-    let currentChat = null, onlineUsers = [], myFriends = [], myRequests = [];
     
-    // Медиа и WebRTC
-    let peer, localStream, activeCallerId = null, isCallVideo = false;
-    const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-    let mediaRecorder, audioChunks = [];
+    <div class="list-container">
+        <input type="text" id="server-url" style="width:85%; margin-bottom:10px;" placeholder="wss://your-space.hf.space">
+        <div id="groups-list">
+            <div class="item-card" onclick="joinRoom('general')"># Общий канал</div>
+        </div>
+        <button onclick="createGroup()" style="margin-top:20px; width:100%;">+ Группа/Канал</button>
+    </div>
+</div>
 
-    // --- АВТОРИЗАЦИЯ ---
-    function toggleAuth() {
-        isReg = !isReg;
-        document.getElementById('auth-title').innerText = isReg ? "Регистрация" : "Вход";
-        document.getElementById('auth-btn').innerText = isReg ? "Создать аккаунт" : "Войти";
-        document.getElementById('toggle-link').innerText = isReg ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Создать";
-        document.getElementById('reg-name').style.display = isReg ? "block" : "none";
+<div id="main-chat">
+    <div id="view-header">
+        <h2 id="room-title">Выберите комнату</h2>
+        <div class="call-actions">
+            <button class="call-btn" onclick="initiateCall()">Звонок</button>
+        </div>
+    </div>
+
+    <div id="video-container"></div>
+
+    <div id="messages-flow"></div>
+
+    <div class="controls">
+        <input type="text" id="msg-input" style="flex:1" placeholder="Сообщение...">
+        <button onclick="sendMsg()">Отправить</button>
+    </div>
+</div>
+
+<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+<script>
+    let peer;
+    let conn;
+    let currentRoom = 'general';
+    const indicator = document.getElementById('connection-indicator');
+
+    function initPeer() {
+        peer = new Peer('koto-' + Math.floor(Math.random() * 10000));
+        
+        peer.on('open', (id) => {
+            indicator.classList.add('status-online');
+            console.log('ID пользователя:', id);
+        });
+
+        peer.on('connection', (connection) => {
+            connection.on('data', (data) => {
+                renderMessage(data);
+            });
+        });
+
+        peer.on('call', (call) => {
+            navigator.mediaDevices.getUserMedia({video: true, audio: true}).then((stream) => {
+                call.answer(stream);
+                handleStream(call);
+            });
+        });
     }
 
-    function handleAuth() {
-        const id = document.getElementById('auth-id').value.trim();
-        const pass = document.getElementById('auth-pass').value;
-        const name = document.getElementById('reg-name').value.trim();
-
-        if (!id || !pass) return alert("Введите ID и пароль!");
-        
-        ws.send(JSON.stringify({
-            type: isReg ? 'register' : 'login',
-            userId: id, password: pass, name: isReg ? name : undefined
-        }));
-        
-        localStorage.setItem('k_p', pass);
+    function sendMsg() {
+        const input = document.getElementById('msg-input');
+        const data = { text: input.value, sender: peer.id };
+        renderMessage(data);
+        input.value = '';
     }
 
-    // --- ВЕБСОКЕТЫ ---
-    function connect() {
-        ws = new WebSocket('wss://kotkotenok43-kotochat-server.hf.space');
-        
-        ws.onopen = () => {
-            if (myId && myPass) ws.send(JSON.stringify({type: 'login', userId: myId, password: myPass}));
-        };
-
-        ws.onmessage = async (e) => {
-            const res = JSON.parse(e.data);
-            
-            if (res.type === 'auth_success') {
-                myId = res.userId; myName = res.name;
-                localStorage.setItem('k_id', myId); localStorage.setItem('k_n', myName);
-                document.getElementById('auth-screen').style.display = 'none';
-                showTab('dialogs');
-            }
-            if (res.type === 'error') {
-                alert(res.text);
-                if (res.text.includes("логин") || res.text.includes("входа")) { localStorage.clear(); document.getElementById('auth-screen').style.display = 'flex'; }
-            }
-            if (res.type === 'user_sync') { myFriends = res.friends; myRequests = res.requests; if(!currentChat && document.getElementById('header-title').innerText === 'Диалоги') renderDialogs(); }
-            if (res.type === 'online_statuses') { onlineUsers = res.onlineIds; if(!currentChat) renderDialogs(); updateChatHeader(); }
-            if (res.type === 'search_result') handleSearch(res);
-            if (res.type === 'history') { 
-                const c = document.getElementById('chat-container'); 
-                if (c) { c.innerHTML = ''; res.messages.forEach(renderMsg); scrollToBottom(); }
-            }
-            if (['text', 'image', 'audio'].includes(res.type) && res.chatId === currentChat) {
-                renderMsg(res); scrollToBottom();
-            }
-            if (res.type === 'typing' && currentChat && res.fromId === currentChat.replace(myId, '').replace('_', '')) {
-                document.getElementById('header-status').innerText = 'печатает...';
-                clearTimeout(window.typingTimeout);
-                window.typingTimeout = setTimeout(updateChatHeader, 2000);
-            }
-
-            // WebRTC
-            if (res.type === 'call_user') {
-                activeCallerId = res.fromId;
-                isCallVideo = res.isVideo;
-                document.getElementById('call-ui').style.display = 'flex';
-                document.getElementById('call-name').innerText = res.fromName;
-                document.getElementById('call-status').innerText = isCallVideo ? 'Входящий видеозвонок...' : 'Входящий аудиозвонок...';
-                document.getElementById('btn-accept').style.display = 'flex';
-                document.getElementById('local-video').style.display = 'none';
-                document.getElementById('remote-video').style.display = 'none';
-            }
-            if (res.type === 'webrtc_signal') {
-                if (!peer) initPeer(res.fromId);
-                if (res.signal.ice) await peer.addIceCandidate(res.signal.ice);
-                else {
-                    await peer.setRemoteDescription(new RTCSessionDescription(res.signal));
-                    if (res.signal.type === 'offer') {
-                        const ans = await peer.createAnswer();
-                        await peer.setLocalDescription(ans);
-                        ws.send(JSON.stringify({type: 'webrtc_signal', targetId: res.fromId, signal: ans}));
-                    }
-                }
-            }
-            if (res.type === 'accept_call') { document.getElementById('call-status').innerText = 'Соединение...'; }
-            if (res.type === 'reject_call' || res.type === 'call_cancelled') endCall();
-        };
-
-        ws.onclose = () => setTimeout(connect, 2000);
+    function renderMessage(data) {
+        const flow = document.getElementById('messages-flow');
+        const div = document.createElement('div');
+        div.className = 'message';
+        div.innerHTML = `<small style="color:var(--accent)">${data.sender}</small><br>${data.text}`;
+        flow.appendChild(div);
+        flow.scrollTop = flow.scrollHeight;
     }
 
-    // --- НАВИГАЦИЯ ---
-    function showTab(tab) {
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.tab === tab));
-        document.getElementById('input-area').style.display = 'none';
-        document.getElementById('bottom-nav').style.display = 'flex';
-        document.getElementById('back-btn').style.display = 'none';
-        document.getElementById('empty-left').style.display = 'block';
-        document.getElementById('call-actions').style.display = 'none';
-        document.getElementById('empty-right').style.display = 'block';
-        document.getElementById('header-status').innerText = '';
-        currentChat = null;
+    async function initiateCall() {
+        const videoGrid = document.getElementById('video-container');
+        videoGrid.style.display = 'grid';
+        const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+        const localVid = document.createElement('video');
+        localVid.srcObject = stream;
+        localVid.muted = true;
+        localVid.play();
+        videoGrid.appendChild(localVid);
+    }
 
-        if (tab === 'dialogs') {
-            document.getElementById('header-title').innerText = 'Диалоги';
-            renderDialogs();
-        } else {
-            document.getElementById('header-title').innerText = 'Настройки';
-            document.getElementById('view-content').innerHTML = `
-                <div style="padding: 40px 20px; text-align: center;">
-                    <div class="avatar" style="margin: 0 auto 20px; width: 100px; height: 100px; font-size: 40px;">${myName ? myName[0] : '?'}</div>
-                    <h2 style="margin-bottom: 5px;">${myName}</h2>
-                    <p style="color: var(--text-gray);">ID: ${myId}</p>
-                    <button onclick="localStorage.clear(); location.reload();" style="width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #ff3b30; background: transparent; color: #ff3b30; font-size: 16px; margin-top: 40px; cursor: pointer;">Выйти из аккаунта</button>
-                </div>`;
+    function createGroup() {
+        const name = prompt("Название группы:");
+        if (name) {
+            const list = document.getElementById('groups-list');
+            const div = document.createElement('div');
+            div.className = 'item-card';
+            div.innerText = `# ${name}`;
+            div.onclick = () => joinRoom(name);
+            list.appendChild(div);
         }
     }
 
-    function renderDialogs() {
-        let html = `
-            <div style="padding: 15px;">
-                <input type="text" placeholder="Найти по ID..." onchange="ws.send(JSON.stringify({type:'search_user', targetId: this.value}))" style="width: 100%; background: var(--panel); border: none; color: #fff; padding: 12px 15px; border-radius: 12px; font-size: 16px;">
-                <div id="search-box"></div>
-            </div>`;
-        
-        myRequests.forEach(r => { 
-            html += `<div class="list-item"><div class="avatar">${r.name[0]}</div><div style="flex:1"><b>${r.name}</b></div><button onclick="ws.send(JSON.stringify({type:'accept_request', targetId:'${r.id}'}))" style="background:#32d74b; border:none; color:#fff; padding:8px 15px; border-radius:10px;">Принять</button></div>`; 
+    function joinRoom(room) {
+        document.getElementById('room-title').innerText = room;
+        document.getElementById('messages-flow').innerHTML = '';
+        currentRoom = room;
+    }
+
+    function handleStream(call) {
+        call.on('stream', (userStream) => {
+            const videoGrid = document.getElementById('video-container');
+            videoGrid.style.display = 'grid';
+            const remoteVid = document.createElement('video');
+            remoteVid.srcObject = userStream;
+            remoteVid.play();
+            videoGrid.appendChild(remoteVid);
         });
-        
-        html += `<div class="list-item" onclick="openChat('global', 'Общий чат')"><div class="avatar">🌍</div><div style="flex:1"><b>Общий чат</b></div></div>`;
-        
-        myFriends.forEach(f => {
-            const isOnline = onlineUsers.includes(f.id);
-            html += `
-            <div class="list-item" onclick="openChat('${[myId, f.id].sort().join('_')}', '${f.name}', '${f.id}')">
-                <div class="avatar">${f.name[0]}<div class="online-dot" style="display:${isOnline?'block':'none'}"></div></div>
-                <div><b>${f.name}</b><br><span style="font-size:13px; color:var(--text-gray)">${isOnline ? 'в сети' : 'был(а) недавно'}</span></div>
-            </div>`;
-        });
-        document.getElementById('view-content').innerHTML = html;
     }
 
-    function handleSearch(res) {
-        const b = document.getElementById('search-box');
-        b.innerHTML = res.found ? `<div class="list-item" style="background:#2c2c2e; border-radius:12px; margin-top:10px;"><div class="avatar">${res.targetName[0]}</div><div style="flex:1"><b>${res.targetName}</b></div><button onclick="ws.send(JSON.stringify({type:'send_request', targetId:'${res.targetId}'}))" style="background:var(--accent); border:none; color:#fff; padding:8px 15px; border-radius:10px;">Добавить</button></div>` : '<p style="color:#ff3b30; text-align:center; padding-top:10px;">Пользователь не найден</p>';
-    }
+    window.onload = initPeer;
+</script>
+</body>
+</html>
 
-    // --- ЧАТ ---
-    function openChat(chatId, name, targetUserId = null) {
-        currentChat = chatId;
-        document.getElementById('header-title').innerText = name;
-        document.getElementById('bottom-nav').style.display = 'none';
-        document.getElementById('input-area').style.display = 'flex';
-        document.getElementById('back-btn').style.display = 'block';
-        document.getElementById('empty-left').style.display = 'none';
-        
-        if (targetUserId) {
-            document.getElementById('call-actions').style.display = 'flex';
-            document.getElementById('empty-right').style.display = 'none';
-            document.getElementById('call-actions').dataset.target = targetUserId;
-        } else {
-            document.getElementById('call-actions').style.display = 'none';
-            document.getElementById('empty-right').style.display = 'block';
-        }
-        
-        document.getElementById('view-content').innerHTML = '<div id="chat-container" class="chat-container"></div>';
-        updateChatHeader();
-        ws.send(JSON.stringify({type: 'get_history', chatId: id = currentChat}));
-    }
-
-    function updateChatHeader() {
-        if (!currentChat || currentChat === 'global') return;
-        const targetId = currentChat.replace(myId, '').replace('_', '');
-        const isOnline = onlineUsers.includes(targetId);
-        const statusEl = document.getElementById('header-status');
-        if (statusEl.innerText !== 'печатает...') {
-            statusEl.innerText = isOnline ? 'в сети' : 'был(а) н
