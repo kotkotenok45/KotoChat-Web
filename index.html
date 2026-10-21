@@ -403,22 +403,31 @@
   var SIG = {
     ws: null, open: false, everTried: false,
     handlers: [],        // fn(msg) for OFFER/ANSWER/CANDIDATE etc.
-    queue: []
+    queue: [],
+    idRetries: 0, lastError: "", onIdChange: null, onStatus: null
   };
   function sigConnect() {
     SIG.everTried = true;
     var url = "wss://0.peerjs.com:443/peerjs?key=peerjs&id=" +
       encodeURIComponent(state.myId) + "&token=" + randToken() + "&version=1.5.4";
     try { SIG.ws = new WebSocket(url); }
-    catch (e) { setNetState(false); return; }
+    catch (e) { setNetState(false); if (SIG.onStatus) SIG.onStatus(false, "WebSocket недоступен"); return; }
+    var wsRef = SIG.ws;
+    if (SIG.onStatus) SIG.onStatus(false, "Подключение к серверу...");
     SIG.ws.onopen = function () {
       SIG.open = true; setNetState(true);
+      if (SIG.onStatus) SIG.onStatus(true, "");
       var q = SIG.queue; SIG.queue = [];
       q.forEach(function (m) { sigSend(m); });
     };
     SIG.ws.onclose = function () {
+      if (SIG.ws !== wsRef) return;
       SIG.open = false; setNetState(false);
-      setTimeout(function () { if (!SIG.open) sigConnect(); }, 4000);
+      if (SIG.onStatus) SIG.onStatus(false, "Нет связи с сервером — переподключение");
+      setTimeout(function () { if (!SIG.open && SIG.ws === wsRef) sigConnect(); }, 4000);
+    };
+    SIG.ws.onerror = function () {
+      if (SIG.onStatus) SIG.onStatus(false, "Не удалось подключиться к сигнальному серверу. Откройте страницу по http(s), не с диска (file://).");
     };
     SIG.ws.onmessage = function (ev) {
       var msg;
@@ -428,16 +437,28 @@
           sigSend({ type: "HEARTBEAT" });
           break;
         case "OPEN":
-          SIG.open = true; setNetState(true);
+          SIG.open = true; SIG.idRetries = 0; setNetState(true);
+          if (SIG.onStatus) SIG.onStatus(true, "");
           break;
         case "ID-TAKEN":
-          state.myId = "koto-" + randId(6); save();
-          sigConnect();
+          // retry same ID briefly (old registration may be stale), then pick a new one
+          if (SIG.idRetries < 2) {
+            SIG.idRetries++;
+            setTimeout(function () { sigConnect(); }, 1500);
+          } else {
+            state.myId = "koto-" + randId(6); save();
+            $("myIdVal").textContent = state.myId;
+            SIG.idRetries = 0;
+            if (SIG.onIdChange) SIG.onIdChange(state.myId);
+            sigConnect();
+          }
           break;
         case "EXPIRE":
           sigConnect();
           break;
         case "ERROR":
+          SIG.lastError = (msg.payload && (msg.payload.msg || JSON.stringify(msg.payload))) || "сервер вернул ошибку";
+          if (SIG.onStatus) SIG.onStatus(true, "Ошибка сервера: " + SIG.lastError);
           break;
         default:
           SIG.handlers.forEach(function (h) { h(msg); });
@@ -454,7 +475,7 @@
   }
 
   /* ================= Peer connections ================= */
-  // conns: {id, chatId, pc, dc, remoteName, role}
+  // conns: {id, chatId, pc, dc, remoteName, role, pendingCands}
   var conns = [];
 
   function connByPeer(peerId) {
@@ -470,8 +491,24 @@
     return null;
   }
 
+  /* Buffer ICE candidates until remote description is set — otherwise
+     addIceCandidate throws and candidates are lost. */
+  function addCand(rec, cand) {
+    if (rec.pc.remoteDescription && rec.pc.remoteDescription.sdp) {
+      rec.pc.addIceCandidate(cand).catch(function (e) {});
+    } else {
+      rec.pendingCands.push(cand);
+    }
+  }
+  function flushCands(rec) {
+    var list = rec.pendingCands; rec.pendingCands = [];
+    list.forEach(function (c) {
+      rec.pc.addIceCandidate(c).catch(function (e) {});
+    });
+  }
+
   function wireDC(chatId, peerId, dc, role) {
-    var rec = { id: peerId, chatId: chatId, pc: null, dc: dc, remoteName: "", role: role };
+    var rec = { id: peerId, chatId: chatId, pc: null, dc: dc, remoteName: "", role: role, pendingCands: [] };
     conns.push(rec);
     dc.onopen = function () {
       try {
@@ -527,10 +564,23 @@
   }
 
   // ---- Outgoing connection (dialer) ----
+  var dialTs = {}; // peerId -> last dial timestamp
   function dial(peerId, chatId, role, onFail) {
     peerId = normalizeId(peerId);
     var existing = connByPeer(peerId);
-    if (existing && existing.dc && existing.dc.readyState !== "closed") return true;
+    if (existing) {
+      var alive = existing.dc && existing.dc.readyState === "open";
+      var halfOpen = existing.dc && (existing.dc.readyState === "connecting");
+      if (alive || halfOpen) return true;
+      // stale attempt — clean up before redialing
+      try { existing.pc && existing.pc.close(); } catch (e) {}
+      try { existing.dc && existing.dc.close(); } catch (e) {}
+      conns = conns.filter(function (c) { return c !== existing; });
+    }
+    // avoid hammering: min 2s between dials to the same peer
+    var now = Date.now();
+    if (dialTs[peerId] && now - dialTs[peerId] < 2000) return true;
+    dialTs[peerId] = now;
 
     var pc = new RTCPeerConnection(ICE);
     var dc = pc.createDataChannel("koto");
@@ -573,7 +623,7 @@
         state.chats.unshift(c); save(); renderList();
       }
       var pc = new RTCPeerConnection(ICE);
-      var rec = { id: peerId, chatId: chatId, pc: pc, dc: null, remoteName: peerId, role: "guest" };
+      var rec = { id: peerId, chatId: chatId, pc: pc, dc: null, remoteName: peerId, role: "guest", pendingCands: [] };
       conns.push(rec);
       pc.ondatachannel = function (e) {
         rec.dc = e.channel;
@@ -583,6 +633,7 @@
         if (evt.candidate) sigSend({ type: "CANDIDATE", payload: { candidate: evt.candidate, connectionId: chatId }, dst: peerId });
       };
       pc.setRemoteDescription(sdp).then(function () {
+        flushCands(rec);
         return pc.createAnswer();
       }).then(function (ans) {
         return pc.setLocalDescription(ans);
@@ -596,12 +647,14 @@
     } else if (msg.type === "ANSWER") {
       var rec2 = connByPeer(peerId);
       if (rec2 && rec2.pc && msg.payload && msg.payload.sdp) {
-        rec2.pc.setRemoteDescription(msg.payload.sdp).catch(function (e) {});
+        rec2.pc.setRemoteDescription(msg.payload.sdp).then(function () {
+          flushCands(rec2);
+        }).catch(function (e) {});
       }
     } else if (msg.type === "CANDIDATE") {
       var rec3 = connByPeer(peerId);
       if (rec3 && rec3.pc && msg.payload && msg.payload.candidate) {
-        rec3.pc.addIceCandidate(msg.payload.candidate).catch(function (e) {});
+        addCand(rec3, msg.payload.candidate);
       }
     } else if (msg.type === "LEAVE") {
       conns = conns.filter(function (c) { return c.id !== peerId; });
@@ -957,15 +1010,26 @@
     });
     $("addStatus").textContent = "Подключаемся к " + peerId + "…";
     $("addStatus").className = "status";
-    setTimeout(function () {
+    var attempts = 0;
+    var timer = setInterval(function () {
+      attempts++;
       if (connForChat(c.id)) {
+        clearInterval(timer);
         $("addStatus").textContent = "Соединено!";
         setTimeout(function () { closeOverlay("ovAdd"); openChat(c.id); }, 600);
-      } else {
-        $("addStatus").textContent = "Не удалось подключиться: проверьте, что собеседник онлайн (открыл KotoChat).";
+      } else if (attempts >= 3) {
+        clearInterval(timer);
+        var reason = "Не удалось подключиться за 15 секунд.";
+        if (!SIG.open) reason += " Нет связи с сигнальным сервером (серый индикатор у ID).";
+        else if (SIG.lastError) reason += " Сервер: " + SIG.lastError;
+        else reason += " Проверьте: собеседник открыл KotoChat и его ID совпадает с введённым.";
+        $("addStatus").textContent = reason;
         $("addStatus").className = "status err";
+      } else {
+        // retry dial every 5s while waiting
+        dial(peerId, c.id, "host");
       }
-    }, 7000);
+    }, 5000);
   };
 
   /* ================= Sending ================= */
@@ -1046,6 +1110,22 @@
   load();
   $("myIdVal").textContent = state.myId;
   renderList();
+  // surface signaling status in UI
+  SIG.onStatus = function (ok, text) {
+    var el = $("netState");
+    if (el) el.className = "state" + (ok ? " on" : "");
+    var myidBox = document.querySelector(".myid");
+    if (myidBox) myidBox.title = ok ? "Сигнальный сервер: подключено" : (text || "Сигнальный сервер: нет связи");
+  };
+  SIG.onIdChange = function (newId) {
+    // ID changed due to conflict — inform the user since the peer may know the old one
+    var el = document.querySelector(".myid .val");
+    if (el) el.textContent = newId;
+    var note = document.createElement("div");
+    note.style.cssText = "margin:6px 14px 0;font-size:11.5px;color:#e8a13a;";
+    note.textContent = "ID изменился из-за конфликта — сообщите собеседнику новый: " + newId;
+    document.querySelector(".myid").parentNode.insertBefore(note, document.querySelector(".bgbar"));
+  };
   sigConnect();
   if (bgEnabled) {
     acquireWakeLock();
