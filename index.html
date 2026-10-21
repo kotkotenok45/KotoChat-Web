@@ -416,7 +416,8 @@
     { url: "wss://broker.hivemq.com:8884/mqtt", name: "HiveMQ" }
   ];
   var SIG = {
-    ws: null, open: false, broker: 0,
+    ws: null, open: false,
+    broker: (function () { try { return Math.max(0, Number(localStorage.getItem("kotochat.broker")) || 0); } catch (e) { return 0; } })(),
     handlers: [], queue: [],
     lastError: "", onStatus: null
   };
@@ -473,7 +474,7 @@
     dbg("SIG: подключение к брокеру " + br.name);
     if (SIG.onStatus) SIG.onStatus(false, "Подключение к серверу...");
     var ws;
-    try { ws = new WebSocket(br.url); }
+    try { ws = new WebSocket(br.url, "mqtt"); }
     catch (e) { setNetState(false); nextBroker(); return; }
     ws.binaryType = "arraybuffer";
     SIG.ws = ws;
@@ -487,7 +488,9 @@
       if (SIG.open) dbg("SIG: соединение с " + br.name + " закрыто");
       SIG.open = false; setNetState(false);
       if (SIG.onStatus) SIG.onStatus(false, "Нет связи — переподключение");
-      setTimeout(function () { if (SIG.ws === wsRef) nextBroker(); }, 3000);
+      // retry the same broker first so peers stay on one broker; rotate after 2 fails
+      SIG.fails = (SIG.fails || 0) + 1;
+      setTimeout(function () { if (SIG.ws === wsRef) { if (SIG.fails >= 2) { SIG.fails = 0; nextBroker(); } else sigConnect(); } }, 3000);
     };
     ws.onerror = function () {
       dbg("SIG: ошибка WebSocket (" + br.name + ")");
@@ -504,7 +507,8 @@
           ws.close();
           return;
         }
-        SIG.open = true; setNetState(true);
+        SIG.open = true; SIG.fails = 0; setNetState(true);
+        try { localStorage.setItem("kotochat.broker", String(SIG.broker)); } catch (e) {}
         dbg("SIG: подключено к " + br.name);
         ws.send(mqttSubscribe(sigTopic(state.myId), 1));
         if (SIG.onStatus) SIG.onStatus(true, "");
