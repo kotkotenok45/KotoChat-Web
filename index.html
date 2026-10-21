@@ -348,10 +348,19 @@
   </div>
 </div>
 
+
 <script>
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
+  var BUILD = "v5";
+
+  /* ================= Debug log → browser console ================= */
+  function dbg(text) {
+    console.log("%c[KotoChat]%c " + text, "color:#4f7cff;font-weight:bold", "");
+  }
+  window.addEventListener("error", function (e) { dbg("JS ERROR: " + e.message + " @" + (e.lineno || "?")); });
+  window.addEventListener("unhandledrejection", function (e) { dbg("PROMISE ERROR: " + (e.reason && e.reason.message ? e.reason.message : e.reason)); });
 
   /* ================= Utilities ================= */
   function randId(len) {
@@ -400,74 +409,130 @@
   var ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
   /* ================= Signaling (PeerJS public cloud) ================= */
+  /* Free public MQTT brokers over WebSocket — signaling relay for testing.
+     If one is unreachable, the app rotates to the next automatically. */
+  var BROKERS = [
+    { url: "wss://broker.emqx.io:8084/mqtt", name: "EMQX" },
+    { url: "wss://broker.hivemq.com:8884/mqtt", name: "HiveMQ" }
+  ];
   var SIG = {
-    ws: null, open: false, everTried: false,
-    handlers: [],        // fn(msg) for OFFER/ANSWER/CANDIDATE etc.
-    queue: [],
-    idRetries: 0, lastError: "", onIdChange: null, onStatus: null
+    ws: null, open: false, broker: 0,
+    handlers: [], queue: [],
+    lastError: "", onStatus: null
   };
+  /* ---- minimal MQTT 3.1.1 over WebSocket (QoS 0 only) ---- */
+  function strBytes(s) {
+    var out = [];
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      if (c < 128) out.push(c);
+      else if (c < 2048) out.push(192 | (c >> 6), 128 | (c & 63));
+      else out.push(224 | (c >> 12), 128 | ((c >> 6) & 63), 128 | (c & 63));
+    }
+    return out;
+  }
+  function bytesStr(b) {
+    var s = "", i = 0;
+    while (i < b.length) {
+      var c = b[i];
+      if (c < 128) { s += String.fromCharCode(c); i++; }
+      else if (c < 224) { s += String.fromCharCode(((c & 31) << 6) | (b[i + 1] & 63)); i += 2; }
+      else { s += String.fromCharCode(((c & 15) << 12) | ((b[i + 1] & 63) << 6) | (b[i + 2] & 63)); i += 3; }
+    }
+    return s;
+  }
+  function mqttLen(n) {
+    var out = [];
+    do { var b = n % 128; n = Math.floor(n / 128); if (n > 0) b |= 128; out.push(b); } while (n > 0);
+    return out;
+  }
+  function mqttStr(s) {
+    var b = strBytes(s);
+    return [(b.length >> 8) & 255, b.length & 255].concat(b);
+  }
+  function mqttPacket(first, body) {
+    return new Uint8Array([first].concat(mqttLen(body.length), body));
+  }
+  function mqttConnect(clientId) {
+    var body = mqttStr("MQTT").concat([4, 0x02, 0, 60], mqttStr(clientId));
+    return mqttPacket(0x10, body);
+  }
+  function mqttSubscribe(topic, pid) {
+    var body = [(pid >> 8) & 255, pid & 255].concat(mqttStr(topic), [0]);
+    return mqttPacket(0x82, body);
+  }
+  function mqttPublish(topic, text) {
+    return mqttPacket(0x30, mqttStr(topic).concat(strBytes(text)));
+  }
+  var MQTT_PING = new Uint8Array([0xC0, 0x00]);
+  function sigTopic(id) { return "kotochat/v1/" + id; }
+
   function sigConnect() {
-    SIG.everTried = true;
-    var url = "wss://0.peerjs.com:443/peerjs?key=peerjs&id=" +
-      encodeURIComponent(state.myId) + "&token=" + randToken() + "&version=1.5.4";
-    try { SIG.ws = new WebSocket(url); }
-    catch (e) { setNetState(false); if (SIG.onStatus) SIG.onStatus(false, "WebSocket недоступен"); return; }
-    var wsRef = SIG.ws;
+    var br = BROKERS[SIG.broker % BROKERS.length];
+    var clientId = "kotochat-" + state.myId + "-" + randId(4);
+    dbg("SIG: подключение к брокеру " + br.name);
     if (SIG.onStatus) SIG.onStatus(false, "Подключение к серверу...");
-    SIG.ws.onopen = function () {
-      SIG.open = true; setNetState(true);
-      if (SIG.onStatus) SIG.onStatus(true, "");
-      var q = SIG.queue; SIG.queue = [];
-      q.forEach(function (m) { sigSend(m); });
+    var ws;
+    try { ws = new WebSocket(br.url); }
+    catch (e) { setNetState(false); nextBroker(); return; }
+    ws.binaryType = "arraybuffer";
+    SIG.ws = ws;
+    var wsRef = ws;
+    ws.onopen = function () {
+      dbg("SIG: WebSocket открыт, отправляю MQTT CONNECT");
+      ws.send(mqttConnect(clientId));
     };
-    SIG.ws.onclose = function () {
+    ws.onclose = function () {
       if (SIG.ws !== wsRef) return;
+      if (SIG.open) dbg("SIG: соединение с " + br.name + " закрыто");
       SIG.open = false; setNetState(false);
-      if (SIG.onStatus) SIG.onStatus(false, "Нет связи с сервером — переподключение");
-      setTimeout(function () { if (!SIG.open && SIG.ws === wsRef) sigConnect(); }, 4000);
+      if (SIG.onStatus) SIG.onStatus(false, "Нет связи — переподключение");
+      setTimeout(function () { if (SIG.ws === wsRef) nextBroker(); }, 3000);
     };
-    SIG.ws.onerror = function () {
-      if (SIG.onStatus) SIG.onStatus(false, "Не удалось подключиться к сигнальному серверу. Откройте страницу по http(s), не с диска (file://).");
+    ws.onerror = function () {
+      dbg("SIG: ошибка WebSocket (" + br.name + ")");
     };
-    SIG.ws.onmessage = function (ev) {
-      var msg;
-      try { msg = JSON.parse(ev.data); } catch (e) { return; }
-      switch (msg.type) {
-        case "HEARTBEAT":
-          sigSend({ type: "HEARTBEAT" });
-          break;
-        case "OPEN":
-          SIG.open = true; SIG.idRetries = 0; setNetState(true);
-          if (SIG.onStatus) SIG.onStatus(true, "");
-          break;
-        case "ID-TAKEN":
-          // retry same ID briefly (old registration may be stale), then pick a new one
-          if (SIG.idRetries < 2) {
-            SIG.idRetries++;
-            setTimeout(function () { sigConnect(); }, 1500);
-          } else {
-            state.myId = "koto-" + randId(6); save();
-            $("myIdVal").textContent = state.myId;
-            SIG.idRetries = 0;
-            if (SIG.onIdChange) SIG.onIdChange(state.myId);
-            sigConnect();
-          }
-          break;
-        case "EXPIRE":
-          sigConnect();
-          break;
-        case "ERROR":
-          SIG.lastError = (msg.payload && (msg.payload.msg || JSON.stringify(msg.payload))) || "сервер вернул ошибку";
-          if (SIG.onStatus) SIG.onStatus(true, "Ошибка сервера: " + SIG.lastError);
-          break;
-        default:
-          SIG.handlers.forEach(function (h) { h(msg); });
+    ws.onmessage = function (ev) {
+      var data = new Uint8Array(ev.data);
+      var type = data[0] >> 4;
+      var i = 1, mult = 1, rl = 0, b;
+      do { b = data[i++]; rl += (b & 127) * mult; mult *= 128; } while (b & 128);
+      if (type === 2) { // CONNACK
+        if (data[i + 1] !== 0) {
+          dbg("SIG: брокер отказал в подключении (code " + data[i + 1] + ")");
+          SIG.lastError = "брокер отказал (code " + data[i + 1] + ")";
+          ws.close();
+          return;
+        }
+        SIG.open = true; setNetState(true);
+        dbg("SIG: подключено к " + br.name);
+        ws.send(mqttSubscribe(sigTopic(state.myId), 1));
+        if (SIG.onStatus) SIG.onStatus(true, "");
+        var q = SIG.queue; SIG.queue = [];
+        q.forEach(function (m) { sigSend(m); });
+      } else if (type === 3) { // PUBLISH
+        var tl = (data[i] << 8) | data[i + 1];
+        var payload = bytesStr(data.subarray(i + 2 + tl, i + rl));
+        var msg;
+        try { msg = JSON.parse(payload); } catch (e) { return; }
+        dbg("SIG← " + msg.type + (msg.src ? " ← " + msg.src : ""));
+        SIG.handlers.forEach(function (h) { h(msg); });
       }
+      // PINGRESP (type 13) — ничего не делаем
     };
   }
+  function nextBroker() {
+    SIG.broker = (SIG.broker + 1) % BROKERS.length;
+    dbg("SIG: переключаюсь на брокер " + BROKERS[SIG.broker].name);
+    sigConnect();
+  }
   function sigSend(m) {
-    if (SIG.ws && SIG.ws.readyState === 1) SIG.ws.send(JSON.stringify(m));
-    else SIG.queue.push(m);
+    dbg("SIG→ " + m.type + (m.dst ? " → " + m.dst : ""));
+    if (SIG.open && SIG.ws && SIG.ws.readyState === 1) {
+      SIG.ws.send(mqttPublish(sigTopic(m.dst), JSON.stringify({ type: m.type, src: state.myId, dst: m.dst, payload: m.payload })));
+    } else {
+      SIG.queue.push(m);
+    }
   }
   function setNetState(on) {
     var el = $("netState");
@@ -510,13 +575,18 @@
   function wireDC(chatId, peerId, dc, role) {
     var rec = { id: peerId, chatId: chatId, pc: null, dc: dc, remoteName: "", role: role, pendingCands: [] };
     conns.push(rec);
+    if (rec.pc) rec.pc.oniceconnectionstatechange = function () {
+      dbg("ICE(" + role + "," + peerId + "): " + rec.pc.iceConnectionState);
+    };
     dc.onopen = function () {
+      dbg("DC OPEN (" + role + "," + peerId + ")");
       try {
         dc.send(JSON.stringify({ t: "hello", name: state.name || "Без имени", id: state.myId, chat: chatMeta(chatId, role) }));
       } catch (e) {}
       updComposer(); renderList(); refreshHeader();
     };
     dc.onclose = function () {
+      dbg("DC CLOSE (" + role + "," + peerId + ")");
       conns = conns.filter(function (c) { return c !== rec; });
       updComposer(); renderList(); refreshHeader();
     };
@@ -581,6 +651,7 @@
     var now = Date.now();
     if (dialTs[peerId] && now - dialTs[peerId] < 2000) return true;
     dialTs[peerId] = now;
+    dbg("DIAL " + peerId + " chat=" + chatId);
 
     var pc = new RTCPeerConnection(ICE);
     var dc = pc.createDataChannel("koto");
@@ -610,6 +681,19 @@
       if (!sdp) return;
       var chatId = msg.payload.connectionId || chatIdFor(peerId);
       var meta = msg.payload.chat || null;
+      dbg("OFFER получен от " + peerId + " chat=" + chatId);
+      // glare: if we are already dialing this peer, deterministic tie-break by ID
+      var mine = connByPeer(peerId);
+      if (mine && mine.role === "host" && mine.dc && mine.dc.readyState !== "open") {
+        if (state.myId > peerId) {
+          dbg("GLARE: игнорирую входящий OFFER, продолжаю свой дозвон (мой ID старше)");
+          return; // our dial wins
+        }
+        dbg("GLARE: уступаю входящему OFFER, закрываю свой дозвон");
+        try { mine.pc && mine.pc.close(); } catch (e) {}
+        try { mine.dc && mine.dc.close(); } catch (e) {}
+        conns = conns.filter(function (x) { return x !== mine; });
+      }
       // ensure chat exists
       var c = chatById(chatId);
       if (!c) {
@@ -625,6 +709,9 @@
       var pc = new RTCPeerConnection(ICE);
       var rec = { id: peerId, chatId: chatId, pc: pc, dc: null, remoteName: peerId, role: "guest", pendingCands: [] };
       conns.push(rec);
+      pc.oniceconnectionstatechange = function () {
+        dbg("ICE(guest," + peerId + "): " + pc.iceConnectionState);
+      };
       pc.ondatachannel = function (e) {
         rec.dc = e.channel;
         wireDCGuest(rec);
@@ -643,13 +730,16 @@
           payload: { sdp: pc.localDescription, connectionId: chatId },
           dst: peerId
         });
-      }).catch(function (e) {});
+      }).catch(function (e) { dbg("OFFER handler error: " + e.message); });
     } else if (msg.type === "ANSWER") {
+      dbg("ANSWER получен от " + peerId);
       var rec2 = connByPeer(peerId);
       if (rec2 && rec2.pc && msg.payload && msg.payload.sdp) {
         rec2.pc.setRemoteDescription(msg.payload.sdp).then(function () {
           flushCands(rec2);
-        }).catch(function (e) {});
+        }).catch(function (e) { dbg("setRemote(answer) error: " + e.message); });
+      } else {
+        dbg("ANSWER без активного соединения (игнор)");
       }
     } else if (msg.type === "CANDIDATE") {
       var rec3 = connByPeer(peerId);
@@ -657,6 +747,7 @@
         addCand(rec3, msg.payload.candidate);
       }
     } else if (msg.type === "LEAVE") {
+      dbg("LEAVE от " + peerId);
       conns = conns.filter(function (c) { return c.id !== peerId; });
       renderList(); updComposer(); refreshHeader();
     }
@@ -665,6 +756,7 @@
   function wireDCGuest(rec) {
     var dc = rec.dc;
     dc.onopen = function () {
+      dbg("DC OPEN (guest," + rec.id + ")");
       try {
         dc.send(JSON.stringify({ t: "hello", name: state.name || "Без имени", id: state.myId, chat: null }));
       } catch (e) {}
@@ -894,10 +986,10 @@
   });
   $("bgSwitch").onclick = requestBg;
   if (bgEnabled) $("bgSwitch").className = "switch on";
-  // keep signaling socket alive: browsers may kill idle ws timers in background
+  // keep MQTT broker connection alive: brokers drop clients after 1.5× keepalive
   setInterval(function () {
-    if (SIG.open) sigSend({ type: "HEARTBEAT" });
-  }, 20000);
+    if (SIG.open && SIG.ws && SIG.ws.readyState === 1) SIG.ws.send(MQTT_PING);
+  }, 25000);
 
   /* ================= Modal helpers ================= */
   function openOverlay(id) { $(id).classList.add("open"); }
@@ -1116,15 +1208,6 @@
     if (el) el.className = "state" + (ok ? " on" : "");
     var myidBox = document.querySelector(".myid");
     if (myidBox) myidBox.title = ok ? "Сигнальный сервер: подключено" : (text || "Сигнальный сервер: нет связи");
-  };
-  SIG.onIdChange = function (newId) {
-    // ID changed due to conflict — inform the user since the peer may know the old one
-    var el = document.querySelector(".myid .val");
-    if (el) el.textContent = newId;
-    var note = document.createElement("div");
-    note.style.cssText = "margin:6px 14px 0;font-size:11.5px;color:#e8a13a;";
-    note.textContent = "ID изменился из-за конфликта — сообщите собеседнику новый: " + newId;
-    document.querySelector(".myid").parentNode.insertBefore(note, document.querySelector(".bgbar"));
   };
   sigConnect();
   if (bgEnabled) {
