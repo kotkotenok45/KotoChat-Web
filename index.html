@@ -38,18 +38,59 @@
     display: flex; align-items: center; justify-content: space-between;
     border-bottom: 1px solid var(--border);
   }
-  .logo { font-size: 18px; font-weight: 700; letter-spacing: .3px; }
+  .logo { font-size: 18px; font-weight: 700; letter-spacing: .3px; cursor: pointer; }
   .logo b { color: var(--accent); font-weight: 700; }
+  .head-btns { display: flex; gap: 8px; }
   .icon-btn {
     width: 34px; height: 34px;
     background: var(--accent); color: #fff;
     border: none; border-radius: 9px;
-    font-size: 19px; line-height: 1; cursor: pointer;
+    cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: background .15s;
   }
   .icon-btn:hover { background: var(--accent-dim); }
-  .search { padding: 10px 14px; }
+  .icon-btn.ghost { background: none; border: 1px solid var(--border); }
+  .icon-btn.ghost:hover { border-color: var(--accent); }
+  .icon-btn svg { width: 17px; height: 17px; stroke: currentColor; }
+  .icon-btn.ghost svg { stroke: var(--muted); }
+
+  .myid {
+    display: flex; align-items: center; gap: 8px;
+    margin: 10px 14px 0; padding: 8px 10px;
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 12px;
+  }
+  .myid .lbl { color: var(--muted); }
+  .myid .val { font-family: var(--mono); font-weight: 600; color: var(--accent); }
+  .myid .copy {
+    margin-left: auto; background: none; border: none; color: var(--muted);
+    font-size: 11.5px; cursor: pointer;
+  }
+  .myid .copy:hover { color: var(--text); }
+  .myid .state { width: 7px; height: 7px; border-radius: 50%; background: var(--muted-2); flex-shrink: 0; }
+  .myid .state.on { background: var(--green); }
+  .bgbar {
+    display: flex; align-items: center; gap: 8px;
+    margin: 8px 14px 0; padding: 7px 10px;
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 12px; color: var(--muted);
+  }
+  .bgbar .switch { margin-left: auto; cursor: pointer; }
+  .switch {
+    width: 34px; height: 19px; border-radius: 20px;
+    background: var(--border); position: relative; border: none;
+    transition: background .2s;
+  }
+  .switch::after {
+    content: ""; position: absolute; top: 2.5px; left: 3px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--muted); transition: all .2s;
+  }
+  .switch.on { background: var(--accent-dim); }
+  .switch.on::after { left: 17px; background: #fff; }
+
+  .search { padding: 10px 14px 6px; }
   .search input {
     width: 100%; padding: 9px 12px;
     background: var(--panel-2); border: 1px solid var(--border);
@@ -90,7 +131,6 @@
     font-size: 11px; font-weight: 700;
     border-radius: 10px; padding: 1px 7px;
   }
-  .type-ico { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; stroke: var(--muted-2); }
 
   /* ============ Main ============ */
   .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -147,7 +187,7 @@
   .overlay.open { display: flex; }
   .modal {
     background: var(--panel); border: 1px solid var(--border);
-    border-radius: 14px; width: 100%; max-width: 460px;
+    border-radius: 14px; width: 100%; max-width: 440px;
     max-height: 90vh; overflow-y: auto; padding: 22px;
   }
   .modal h3 { font-size: 16px; margin-bottom: 4px; }
@@ -159,13 +199,6 @@
     border-radius: 8px; color: var(--text); font-size: 13.5px; outline: none;
   }
   .modal input[type=text]:focus { border-color: var(--accent); }
-  .modal textarea {
-    width: 100%; padding: 9px; min-height: 52px; resize: vertical;
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text);
-    font-family: var(--mono); font-size: 11px; outline: none;
-  }
-  .modal textarea:focus { border-color: var(--accent); }
   .menu-item {
     display: flex; align-items: center; gap: 12px;
     padding: 12px; border-radius: 10px; cursor: pointer;
@@ -176,14 +209,7 @@
   .menu-item svg { width: 22px; height: 22px; stroke: var(--accent); flex-shrink: 0; }
   .menu-item .t { font-size: 14px; font-weight: 600; }
   .menu-item .d { font-size: 12px; color: var(--muted); margin-top: 1px; }
-  .qr-box {
-    display: flex; justify-content: center; margin: 12px 0;
-  }
-  .qr-box canvas {
-    background: #fff; border-radius: 10px; padding: 6px;
-    image-rendering: pixelated;
-  }
-  .row { display: flex; gap: 8px; margin-top: 10px; }
+  .row { display: flex; gap: 8px; margin-top: 14px; }
   .row .btn { flex: 1; }
   .status { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
   .status.err { color: var(--red); }
@@ -205,10 +231,25 @@
 <div class="app" id="app">
   <aside class="sidebar">
     <div class="sb-head">
-      <div class="logo">Koto<b>Chat</b></div>
-      <button class="icon-btn" id="btnNew" title="Новый чат">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
+      <div class="logo" id="logoBtn">Koto<b>Chat</b></div>
+      <div class="head-btns">
+        <button class="icon-btn ghost" id="btnProfile" title="Профиль">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+        </button>
+        <button class="icon-btn" id="btnNew" title="Новый чат">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="myid">
+      <span class="state" id="netState"></span>
+      <span class="lbl">Мой ID:</span>
+      <span class="val" id="myIdVal">…</span>
+      <button class="copy" id="btnCopyId">копировать</button>
+    </div>
+    <div class="bgbar">
+      <span>Уведомления и работа в фоне</span>
+      <button class="switch" id="bgSwitch" title="Включить уведомления и фоновый режим"></button>
     </div>
     <div class="search"><input id="search" placeholder="Поиск" /></div>
     <div class="tabs">
@@ -246,22 +287,18 @@
 <div class="overlay" id="ovMenu">
   <div class="modal">
     <h3>Новый чат</h3>
-    <div class="hint">Собеседник может быть на любом расстоянии — соединение устанавливается напрямую.</div>
+    <div class="hint">Сообщения передаются напрямую между устройствами. Сигнальный сервер используется только для установки соединения.</div>
     <div class="menu-item" data-new="contact">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
       <div><div class="t">Контакт</div><div class="d">Личный чат с одним человеком</div></div>
     </div>
     <div class="menu-item" data-new="group">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="9" r="3.4"/><circle cx="17" cy="10.5" r="2.6"/><path d="M2.5 20c0-3.4 2.9-5.5 6.5-5.5s6.5 2.1 6.5 5.5"/><path d="M16.5 14.6c2.9.2 5 2 5 4.6"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="9" r="3.4"/><circle cx="17" cy="10.5" r="2.6"/><path d="M2.5 20c0-3.4 2.9-5.5 6.5-5.5s6.5 2.1 6.5 5.5"/></svg>
       <div><div class="t">Группа</div><div class="d">Общий чат для нескольких людей</div></div>
     </div>
     <div class="menu-item" data-new="channel">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4l5 4V6z"/><path d="M8 8h7a5 5 0 0 1 0 10H8"/></svg>
       <div><div class="t">Канал</div><div class="d">Публикации: пишете только вы, читают все</div></div>
-    </div>
-    <div class="menu-item" id="btnJoinMenu">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17.5h7M17.5 14v7"/></svg>
-      <div><div class="t">Присоединиться</div><div class="d">По коду или QR-приглашению</div></div>
     </div>
     <div class="row"><button class="btn ghost" data-close>Отмена</button></div>
   </div>
@@ -271,45 +308,28 @@
 <div class="overlay" id="ovCreate">
   <div class="modal">
     <h3 id="createTitle">Новый контакт</h3>
-    <label>Название</label>
+    <div class="hint" id="createHint"></div>
+    <label id="nameLbl">Название</label>
     <input type="text" id="createName" placeholder="Например: Максим" maxlength="24" />
+    <label id="idsLbl" style="display:none">ID участников (через запятую)</label>
+    <input type="text" id="createIds" placeholder="koto-xxxxxx, koto-yyyyyy" style="display:none" />
     <div class="row">
       <button class="btn ghost" data-close>Отмена</button>
       <button class="btn" id="btnCreateOk">Создать</button>
     </div>
+    <div class="status" id="createStatus"></div>
   </div>
 </div>
 
-<!-- Invite modal (host side) -->
-<div class="overlay" id="ovInvite">
+<!-- Add by ID modal -->
+<div class="overlay" id="ovAdd">
   <div class="modal">
-    <h3>Приглашение</h3>
-    <div class="hint">Покажите QR-код или отправьте код собеседнику. Отсканируйте его камерой телефона или передайте текстом.</div>
-    <div class="qr-box" id="qrHostBox"><canvas id="qrHost"></canvas></div>
-    <label>Код приглашения</label>
-    <textarea id="offerOut" readonly placeholder="Готовится..."></textarea>
-    <div class="row"><button class="btn ghost" id="btnCopyOffer">Копировать</button></div>
-    <label>Ответ собеседника</label>
-    <textarea id="answerIn" placeholder="Вставьте сюда код-ответ собеседника"></textarea>
-    <div class="row"><button class="btn" id="btnAcceptAnswer">Подключить</button></div>
-    <div class="status" id="inviteStatus"></div>
-    <div class="row"><button class="btn ghost" data-close>Закрыть</button></div>
-  </div>
-</div>
-
-<!-- Join modal (guest side) -->
-<div class="overlay" id="ovJoin">
-  <div class="modal">
-    <h3>Присоединиться к чату</h3>
-    <div class="hint">Вставьте код приглашения, отсканированный с QR, или полученный текстом.</div>
-    <label>Код приглашения</label>
-    <textarea id="offerIn" placeholder="Вставьте код приглашения"></textarea>
-    <div class="row"><button class="btn" id="btnJoin">Подключиться</button></div>
-    <label id="answerLabel" style="display:none">Ваш код-ответ — отправьте его владельцу чата</label>
-    <div class="qr-box" id="qrGuestBox" style="display:none"><canvas id="qrGuest"></canvas></div>
-    <textarea id="answerOut" readonly style="display:none"></textarea>
-    <div class="row" id="copyAnswerRow" style="display:none"><button class="btn ghost" id="btnCopyAnswer">Копировать ответ</button></div>
-    <div class="status" id="joinStatus"></div>
+    <h3>Подключиться к собеседнику</h3>
+    <div class="hint">Введите KotoID человека — он указан у него под логотипом. Соединение установится автоматически.</div>
+    <label>ID собеседника</label>
+    <input type="text" id="addId" placeholder="koto-xxxxxx" />
+    <div class="row"><button class="btn" id="btnAddOk">Подключить</button></div>
+    <div class="status" id="addStatus"></div>
     <div class="row"><button class="btn ghost" data-close>Закрыть</button></div>
   </div>
 </div>
@@ -317,11 +337,14 @@
 <!-- Profile modal -->
 <div class="overlay" id="ovProfile">
   <div class="modal">
-    <h3>Ваш профиль</h3>
+    <h3>Профиль</h3>
     <div class="hint">Имя увидят собеседники в группах и каналах.</div>
     <label>Имя</label>
     <input type="text" id="profileName" maxlength="24" />
+    <label>Мой KotoID</label>
+    <input type="text" id="profileId" readonly />
     <div class="row"><button class="btn" id="btnSaveProfile">Сохранить</button></div>
+    <div class="status" id="profileStatus"></div>
   </div>
 </div>
 
@@ -330,361 +353,291 @@
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
 
-  /* ================= UTF-8 / base64url utils ================= */
-  function utf8(str) {
-    var out = [];
-    for (var i = 0; i < str.length; i++) {
-      var cp = str.codePointAt(i);
-      if (cp > 0xffff) i++;
-      if (cp < 0x80) out.push(cp);
-      else if (cp < 0x800) out.push(0xc0 | (cp >> 6), 0x80 | (cp & 63));
-      else if (cp < 0x10000) out.push(0xe0 | (cp >> 12), 0x80 | ((cp >> 6) & 63), 0x80 | (cp & 63));
-      else out.push(0xf0 | (cp >> 18), 0x80 | ((cp >> 12) & 63), 0x80 | ((cp >> 6) & 63), 0x80 | (cp & 63));
-    }
-    return out;
-  }
-  function fromUtf8(b) {
-    var s = "", i = 0;
-    while (i < b.length) {
-      var c = b[i];
-      if (c < 0x80) { s += String.fromCharCode(c); i++; }
-      else if (c < 0xc0) { s += "\uFFFD"; i++; }
-      else if (c < 0xe0) { s += String.fromCharCode(((c & 31) << 6) | (b[i + 1] & 63)); i += 2; }
-      else if (c < 0xf0) { s += String.fromCharCode(((c & 15) << 12) | ((b[i + 1] & 63) << 6) | (b[i + 2] & 63)); i += 3; }
-      else { s += String.fromCodePoint(((c & 7) << 18) | ((b[i + 1] & 63) << 12) | ((b[i + 2] & 63) << 6) | (b[i + 3] & 63)); i += 4; }
-    }
+  /* ================= Utilities ================= */
+  function randId(len) {
+    var chars = "abcdefghjkmnpqrstuvwxyz23456789", s = "";
+    for (var i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
     return s;
   }
-  var B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-  function b64u(bytes) {
+  function randToken() {
     var s = "";
-    for (var i = 0; i < bytes.length; i += 3) {
-      var b0 = bytes[i], b1 = i + 1 < bytes.length ? bytes[i + 1] : 0, b2 = i + 2 < bytes.length ? bytes[i + 2] : 0;
-      s += B64[b0 >> 2] + B64[((b0 & 3) << 4) | (b1 >> 4)];
-      s += (i + 1 < bytes.length) ? B64[((b1 & 15) << 2) | (b2 >> 6)] : "=";
-      s += (i + 2 < bytes.length) ? B64[b2 & 63] : "=";
-    }
+    for (var i = 0; i < 24; i++) s += Math.floor(Math.random() * 16).toString(16);
     return s;
   }
-  function unb64u(str) {
-    str = str.trim().replace(/-/g, "+").replace(/_/g, "/").replace(/=+$/, "");
-    var bytes = [], bits = 0, acc = 0;
-    for (var i = 0; i < str.length; i++) {
-      var v = B64.indexOf(str[i]);
-      if (v < 0) throw new Error("bad code");
-      acc = (acc << 6) | v; bits += 6;
-      if (bits >= 8) { bits -= 8; bytes.push((acc >> bits) & 255); }
-    }
-    return bytes;
-  }
-
-  /* ================= QR encoder (v1-9, ECC L) ================= */
-  var QR = (function () {
-    var gexp = new Array(512), glog = new Array(256), x = 1;
-    for (var i = 0; i < 512; i++) { gexp[i] = x; if (i < 256) glog[x] = i; x <<= 1; if (x & 0x100) x ^= 0x11d; }
-    function mul(a, b) { return (a === 0 || b === 0) ? 0 : gexp[glog[a] + glog[b]]; }
-    function genPoly(n) {
-      var p = [1];
-      for (var i = 0; i < n; i++) {
-        var q = new Array(p.length + 1).fill(0);
-        for (var j = 0; j < p.length; j++) { q[j] ^= mul(p[j], 1); q[j + 1] ^= mul(p[j], gexp[i]); }
-        p = q;
-      }
-      return p;
-    }
-    function rsEnc(msg, nsym) {
-      var gen = genPoly(nsym), res = msg.concat(new Array(nsym).fill(0));
-      for (var i = 0; i < msg.length; i++) {
-        var c = res[i];
-        if (c !== 0) for (var j = 0; j < gen.length; j++) res[i + j] ^= mul(gen[j], c);
-      }
-      return res.slice(msg.length);
-    }
-    var VT = { 1:[26,7,1],2:[44,10,1],3:[70,15,1],4:[100,20,1],5:[134,26,1],6:[172,18,2],7:[196,20,2],8:[242,24,2],9:[292,30,2] };
-    var ALIGN = { 2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],9:[6,26,46] };
-    var MASKF = [
-      function (r, c) { return (r + c) % 2 === 0; }, function (r, c) { return r % 2 === 0; },
-      function (r, c) { return c % 3 === 0; }, function (r, c) { return (r + c) % 3 === 0; },
-      function (r, c) { return (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0; },
-      function (r, c) { return ((r * c) % 2) + ((r * c) % 3) === 0; },
-      function (r, c) { return (((r * c) % 2) + ((r * c) % 3)) % 2 === 0; },
-      function (r, c) { return (((r + c) % 2) + ((r * c) % 3)) % 2 === 0; }
-    ];
-    function makeMatrix(version, dataCw, maskId) {
-      var size = 17 + 4 * version;
-      var m = [];
-      for (var i = 0; i < size; i++) m.push(new Array(size).fill(null));
-      function finder(r0, c0) {
-        for (var r = -1; r <= 7; r++) for (var c = -1; c <= 7; c++) {
-          var rr = r0 + r, cc = c0 + c;
-          if (rr < 0 || cc < 0 || rr >= size || cc >= size) continue;
-          m[rr][cc] = r >= 0 && r <= 6 && c >= 0 && c <= 6 && (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4));
-        }
-      }
-      finder(0, 0); finder(0, size - 7); finder(size - 7, 0);
-      for (var i = 8; i < size - 8; i++) { m[6][i] = i % 2 === 0; m[i][6] = i % 2 === 0; }
-      var ap = ALIGN[version];
-      if (ap) for (var ai = 0; ai < ap.length; ai++) for (var aj = 0; aj < ap.length; aj++) {
-        var r = ap[ai], c = ap[aj];
-        if ((r < 7 && c < 7) || (r < 7 && c > size - 8) || (r > size - 8 && c < 7)) continue;
-        for (var dr = -2; dr <= 2; dr++) for (var dc = -2; dc <= 2; dc++) m[r + dr][c + dc] = Math.max(Math.abs(dr), Math.abs(dc)) !== 1;
-      }
-      m[size - 8][8] = true;
-      var fmtData = (1 << 3) | maskId, rem = fmtData << 10;
-      for (var i = 14; i >= 10; i--) if ((rem >> i) & 1) rem ^= 0x537 << (i - 10);
-      var fmt = ((fmtData << 10) | rem) ^ 0x5412;
-      for (var i = 0; i < 15; i++) {
-        var b = (fmt >> i) & 1;
-        if (i < 6) m[i][8] = b; else if (i < 8) m[i + 1][8] = b; else m[size - 15 + i][8] = b;
-        if (i < 8) m[8][size - i - 1] = b; else if (i < 9) m[8][15 - i] = b; else m[8][15 - i - 1] = b;
-      }
-      if (version >= 7) {
-        var vrem = version << 12;
-        for (var i = 17; i >= 12; i--) if ((vrem >> i) & 1) vrem ^= 0x1f25 << (i - 12);
-        var vinfo = (version << 12) | (vrem & 0xfff);
-        for (var i = 0; i < 18; i++) {
-          var b = (vinfo >> i) & 1;
-          m[Math.floor(i / 3)][i % 3 + size - 11] = b;
-          m[i % 3 + size - 11][Math.floor(i / 3)] = b;
-        }
-      }
-      var inc = -1, row = size - 1, bit = 7, idx = 0;
-      for (var col = size - 1; col > 0; col -= 2) {
-        if (col === 6) col--;
-        while (true) {
-          for (var c = 0; c < 2; c++) {
-            var cc = col - c;
-            if (m[row][cc] === null) {
-              var dark = false;
-              if (idx < dataCw.length) dark = ((dataCw[idx] >> bit) & 1) === 1;
-              if (MASKF[maskId](row, cc)) dark = !dark;
-              m[row][cc] = dark;
-              bit--; if (bit < 0) { idx++; bit = 7; }
-            }
-          }
-          row += inc;
-          if (row < 0 || row >= size) { row -= inc; inc = -inc; break; }
-        }
-      }
-      for (var r = 0; r < size; r++) for (var c = 0; c < size; c++) if (m[r][c] === null) m[r][c] = false;
-      return m;
-    }
-    function penalty(m) {
-      var size = m.length, p = 0;
-      function runPen(line) {
-        var s = 0, i = 0;
-        while (i < line.length) { var j = i; while (j < line.length && line[j] === line[i]) j++; var run = j - i; if (run >= 5) s += 3 + (run - 5); i = j; }
-        return s;
-      }
-      for (var r = 0; r < size; r++) p += runPen(m[r]);
-      for (var c = 0; c < size; c++) { var col = []; for (var r = 0; r < size; r++) col.push(m[r][c]); p += runPen(col); }
-      for (var r = 0; r < size - 1; r++) for (var c = 0; c < size - 1; c++) {
-        var v = m[r][c];
-        if (v === m[r][c + 1] && v === m[r + 1][c] && v === m[r + 1][c + 1]) p += 3;
-      }
-      var PAT = [1, 0, 1, 1, 1, 0, 1];
-      for (var pass = 0; pass < 2; pass++) for (var a = 0; a < size; a++) for (var b = 0; b + 6 <= size - 1; b++) {
-        var ok = true;
-        for (var k = 0; k < 7; k++) { var v = pass === 0 ? m[a][b + k] : m[b + k][a]; if ((v ? 1 : 0) !== PAT[k]) { ok = false; break; } }
-        if (!ok) continue;
-        var L = b >= 4, R = b + 10 <= size - 1;
-        if (L) for (var k = 1; k <= 4; k++) { var v = pass === 0 ? m[a][b - k] : m[b - k][a]; if (v) { L = false; break; } }
-        if (R) for (var k = 7; k <= 10; k++) { var v = pass === 0 ? m[a][b + k] : m[b + k][a]; if (v) { R = false; break; } }
-        if ((L || b === 0) || (R || b + 7 === size)) p += 40;
-      }
-      var dark = 0;
-      for (var r = 0; r < size; r++) for (var c = 0; c < size; c++) if (m[r][c]) dark++;
-      p += Math.floor(Math.abs(dark * 100 / (size * size) - 50) / 5) * 10;
-      return p;
-    }
-    function encode(bytes) {
-      var version = 0;
-      for (var v = 1; v <= 9; v++) { var t = VT[v]; if (bytes.length <= t[0] - t[1] * t[2] - 2) { version = v; break; } }
-      if (!version) throw new Error("Слишком длинный код для QR");
-      var total = VT[version][0], ec = VT[version][1], blocks = VT[version][2], dataLen = total - ec * blocks;
-      var bits = [];
-      function push(val, n) { for (var i = n - 1; i >= 0; i--) bits.push((val >> i) & 1); }
-      push(4, 4); push(bytes.length, 8);
-      for (var i = 0; i < bytes.length; i++) push(bytes[i], 8);
-      push(0, Math.min(4, dataLen * 8 - bits.length));
-      while (bits.length % 8) bits.push(0);
-      var dataCw = [];
-      for (var i = 0; i < bits.length; i += 8) { var b = 0; for (var j = 0; j < 8; j++) b = (b << 1) | bits[i + j]; dataCw.push(b); }
-      var PAD = [0xec, 0x11], pi = 0;
-      while (dataCw.length < dataLen) dataCw.push(PAD[(pi++) % 2]);
-      var blockLen = dataLen / blocks, datas = [], eccs = [];
-      for (var b = 0; b < blocks; b++) { var blk = dataCw.slice(b * blockLen, (b + 1) * blockLen); datas.push(blk); eccs.push(rsEnc(blk, ec)); }
-      var full = [];
-      for (var i = 0; i < blockLen; i++) for (var b = 0; b < blocks; b++) full.push(datas[b][i]);
-      for (var i = 0; i < ec; i++) for (var b = 0; b < blocks; b++) full.push(eccs[b][i]);
-      var best = null, bestP = Infinity;
-      for (var mask = 0; mask < 8; mask++) { var m = makeMatrix(version, full, mask); var p = penalty(m); if (p < bestP) { bestP = p; best = m; } }
-      return best;
-    }
-    function draw(canvas, text, scale) {
-      scale = scale || 4;
-      var bytes = utf8(text);
-      var m = encode(bytes);
-      var quiet = 4, size = m.length;
-      canvas.width = (size + quiet * 2) * scale;
-      canvas.height = canvas.width;
-      var ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#000";
-      for (var r = 0; r < size; r++) for (var c = 0; c < size; c++) {
-        if (m[r][c]) ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
-      }
-    }
-    return { draw: draw };
-  })();
-
-  /* ================= Compact invite format ================= */
-  // [ver=1][type][nameLen][name..][ufragLen][ufrag..][pwdLen][pwd..][fp(32)][candType][ip(4)][port(2)]
-  function packPayload(type, name, ufrag, pwd, fpBytes, cand) {
-    var nb = utf8(name);
-    if (nb.length > 40) nb = nb.slice(0, 40);
-    var b = [1, type, nb.length];
-    b = b.concat(nb);
-    var ub = utf8(ufrag), pb2 = utf8(pwd);
-    b.push(ub.length); b = b.concat(ub);
-    b.push(pb2.length); b = b.concat(pb2);
-    b = b.concat(fpBytes);
-    b.push(cand.typ === "srflx" ? 1 : 0);
-    var ip = cand.ip.split(".");
-    if (ip.length !== 4) throw new Error("no ipv4");
-    b = b.concat(ip.map(Number));
-    b.push((cand.port >> 8) & 255, cand.port & 255);
-    return b;
-  }
-  function unpackPayload(b) {
-    if (!b || b[0] !== 1) return null;
-    var i = 1, type = b[i++];
-    var nlen = b[i++]; var name = fromUtf8(b.slice(i, i + nlen)); i += nlen;
-    var ulen = b[i++]; var ufrag = fromUtf8(b.slice(i, i + ulen)); i += ulen;
-    var plen = b[i++]; var pwd = fromUtf8(b.slice(i, i + plen)); i += plen;
-    var fp = b.slice(i, i + 32).map(function (x) { return x.toString(16).padStart(2, "0").toUpperCase(); }).join(":"); i += 32;
-    var typ = b[i++] === 1 ? "srflx" : "host";
-    var ip = b[i] + "." + b[i + 1] + "." + b[i + 2] + "." + b[i + 3]; i += 4;
-    var port = (b[i] << 8) | b[i + 1];
-    return { type: type, name: name, ufrag: ufrag, pwd: pwd, fp: fp, typ: typ, ip: ip, port: port };
-  }
-  function buildSDP(p, setup) {
-    return "v=0\r\n" +
-      "o=- 0 0 IN IP4 127.0.0.1\r\n" +
-      "s=-\r\n" +
-      "t=0 0\r\n" +
-      "a=group:BUNDLE 0\r\n" +
-      "m=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\n" +
-      "c=IN IP4 0.0.0.0\r\n" +
-      "a=ice-ufrag:" + p.ufrag + "\r\n" +
-      "a=ice-pwd:" + p.pwd + "\r\n" +
-      "a=fingerprint:sha-256 " + p.fp + "\r\n" +
-      "a=setup:" + setup + "\r\n" +
-      "a=mid:0\r\n" +
-      "a=sctp-port:5000\r\n" +
-      "a=candidate:1 1 UDP 2130706431 " + p.ip + " " + p.port + " typ " + p.typ + "\r\n";
-  }
-  function extractPayload(sdp, type, name) {
-    var ufrag = (sdp.match(/a=ice-ufrag:(.+)/) || [])[1];
-    var pwd = (sdp.match(/a=ice-pwd:(.+)/) || [])[1];
-    var fpHex = (sdp.match(/a=fingerprint:sha-256 ([0-9A-Fa-f:]+)/) || [])[1];
-    if (!ufrag || !pwd || !fpHex) throw new Error("SDP parse");
-    var fpBytes = fpHex.split(":").map(function (h) { return parseInt(h, 16); });
-    if (fpBytes.length !== 32) throw new Error("fp");
-    var cands = sdp.split("\r\n").filter(function (l) { return l.indexOf("a=candidate:") === 0 && l.indexOf(" udp ") > 0; });
-    var pick = null;
-    var re = /a=candidate:\S+ 1 udp \d+ (\d+\.\d+\.\d+\.\d+) (\d+) typ (\w+)/i;
-    cands.forEach(function (l) {
-      var m = l.match(re);
-      if (!m) return;
-      var cand = { ip: m[1], port: parseInt(m[2]), typ: m[3].toLowerCase() };
-      if (cand.typ === "srflx") pick = cand;
-      else if (!pick && cand.typ === "host" && cand.ip !== "0.0.0.0") pick = cand;
-    });
-    if (!pick) throw new Error("no candidate");
-    return packPayload(type, name, ufrag, pwd, fpBytes, pick);
-  }
-  function sdpToCompactCode(sdp, type, name) {
-    try { return "K1." + b64u(extractPayload(sdp, type, name)); }
-    catch (e) { return "KF." + b64u(utf8(JSON.stringify({ type: type, name: name, sdp: sdp }))); }
-  }
-  function codeToSDP(code, setup) {
-    code = code.trim();
-    if (code.indexOf("K1.") === 0) {
-      var p = unpackPayload(unb64u(code.slice(3)));
-      if (!p) throw new Error("Код повреждён");
-      return { sdp: buildSDP(p, setup), type: p.type, name: p.name };
-    }
-    if (code.indexOf("KF.") === 0) {
-      var o = JSON.parse(fromUtf8(unb64u(code.slice(3))));
-      var desc = JSON.parse(o.sdp.replace(/\\r\\n/g, "\r\n"));
-      return { sdp: desc.sdp, type: o.type, name: o.name };
-    }
-    throw new Error("Некорректный код");
-  }
-  // answer code only transports SDP (type/name known from invite)
-  function answerSdpToCode(sdp) {
-    try { return "K1." + b64u(extractPayload(sdp, 0, "")); }
-    catch (e) { return "KF." + b64u(utf8(JSON.stringify({ sdp: sdp }))); }
-  }
-  function answerCodeToSDP(code) {
-    code = code.trim();
-    if (code.indexOf("K1.") === 0) {
-      var p = unpackPayload(unb64u(code.slice(3)));
-      return buildSDP(p, "active");
-    }
-    if (code.indexOf("KF.") === 0) {
-      var o = JSON.parse(fromUtf8(unb64u(code.slice(3))));
-      var d = (typeof o.sdp === "string") ? JSON.parse(o.sdp) : o.sdp;
-      return d.sdp || o.sdp;
-    }
-    throw new Error("Некорректный ответ");
-  }
+  function nowTime() { return new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }); }
 
   /* ================= App state ================= */
-  var STORE = "kotochat.v2";
-  var state = { name: "", chats: [], activeId: null };
-  var peers = [];   // {chatId, dc, name, role:"owner"|"guest"}
-  var pend = [];    // pending invites: {chatId, pc, dc}
-  var guestCtx = null; // guest join in progress: {chatId, pc, code}
-
+  var STORE = "kotochat.v3";
+  var state = { name: "", myId: "", chats: [], activeId: null };
   function load() {
     try {
       var raw = localStorage.getItem(STORE);
-      if (raw) { var o = JSON.parse(raw); state.name = o.name || ""; state.chats = o.chats || []; return; }
+      if (raw) {
+        var o = JSON.parse(raw);
+        state.name = o.name || "";
+        state.myId = o.myId || "";
+        state.chats = o.chats || [];
+        return;
+      }
     } catch (e) {}
-    state.name = ""; state.chats = [];
+    if (!state.myId) state.myId = "koto-" + randId(6);
   }
   function save() {
     try {
       var chats = state.chats.map(function (c) {
-        return { id: c.id, type: c.type, name: c.name, owner: c.owner, unread: c.unread, msgs: c.msgs.slice(-200) };
+        return { id: c.id, type: c.type, name: c.name, owner: c.owner, members: c.members || [], unread: c.unread, msgs: c.msgs.slice(-500) };
       });
-      localStorage.setItem(STORE, JSON.stringify({ name: state.name, chats: chats }));
+      localStorage.setItem(STORE, JSON.stringify({ name: state.name, myId: state.myId, chats: chats }));
     } catch (e) {}
   }
 
-  var TYPE = { contact: 0, group: 1, channel: 2 };
-  var TYPE_NAME = { contact: "Контакт", group: "Группа", channel: "Канал" };
+  var TYPE = { contact: "contact", group: "group", channel: "channel" };
   var ICONS = {
     contact: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>',
     group: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="9" r="3.4"/><circle cx="17" cy="10.5" r="2.6"/><path d="M2.5 20c0-3.4 2.9-5.5 6.5-5.5s6.5 2.1 6.5 5.5"/></svg>',
     channel: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4l5 4V6z"/><path d="M8 8h7a5 5 0 0 1 0 10H8"/></svg>'
   };
-
   var ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-  function waitIce(pc) {
-    return new Promise(function (res) {
-      if (pc.iceGatheringState === "complete") return res();
-      var done = false;
-      var check = function () {
-        if (pc.iceGatheringState === "complete" && !done) { done = true; pc.removeEventListener("icegatheringstatechange", check); res(); }
-      };
-      pc.addEventListener("icegatheringstatechange", check);
-      setTimeout(function () { if (!done) { done = true; res(); } }, 3500);
+
+  /* ================= Signaling (PeerJS public cloud) ================= */
+  var SIG = {
+    ws: null, open: false, everTried: false,
+    handlers: [],        // fn(msg) for OFFER/ANSWER/CANDIDATE etc.
+    queue: []
+  };
+  function sigConnect() {
+    SIG.everTried = true;
+    var url = "wss://0.peerjs.com:443/peerjs?key=peerjs&id=" +
+      encodeURIComponent(state.myId) + "&token=" + randToken() + "&version=1.5.4";
+    try { SIG.ws = new WebSocket(url); }
+    catch (e) { setNetState(false); return; }
+    SIG.ws.onopen = function () {
+      SIG.open = true; setNetState(true);
+      var q = SIG.queue; SIG.queue = [];
+      q.forEach(function (m) { sigSend(m); });
+    };
+    SIG.ws.onclose = function () {
+      SIG.open = false; setNetState(false);
+      setTimeout(function () { if (!SIG.open) sigConnect(); }, 4000);
+    };
+    SIG.ws.onmessage = function (ev) {
+      var msg;
+      try { msg = JSON.parse(ev.data); } catch (e) { return; }
+      switch (msg.type) {
+        case "HEARTBEAT":
+          sigSend({ type: "HEARTBEAT" });
+          break;
+        case "OPEN":
+          SIG.open = true; setNetState(true);
+          break;
+        case "ID-TAKEN":
+          state.myId = "koto-" + randId(6); save();
+          sigConnect();
+          break;
+        case "EXPIRE":
+          sigConnect();
+          break;
+        case "ERROR":
+          break;
+        default:
+          SIG.handlers.forEach(function (h) { h(msg); });
+      }
+    };
+  }
+  function sigSend(m) {
+    if (SIG.ws && SIG.ws.readyState === 1) SIG.ws.send(JSON.stringify(m));
+    else SIG.queue.push(m);
+  }
+  function setNetState(on) {
+    var el = $("netState");
+    if (el) el.className = "state" + (on ? " on" : "");
+  }
+
+  /* ================= Peer connections ================= */
+  // conns: {id, chatId, pc, dc, remoteName, role}
+  var conns = [];
+
+  function connByPeer(peerId) {
+    for (var i = 0; i < conns.length; i++) if (conns[i].id === peerId) return conns[i];
+    return null;
+  }
+  function connForChat(chatId) {
+    for (var i = 0; i < conns.length; i++) if (conns[i].chatId === chatId && conns[i].dc && conns[i].dc.readyState === "open") return conns[i];
+    return null;
+  }
+  function chatById(id) {
+    for (var i = 0; i < state.chats.length; i++) if (state.chats[i].id === id) return state.chats[i];
+    return null;
+  }
+
+  function wireDC(chatId, peerId, dc, role) {
+    var rec = { id: peerId, chatId: chatId, pc: null, dc: dc, remoteName: "", role: role };
+    conns.push(rec);
+    dc.onopen = function () {
+      try {
+        dc.send(JSON.stringify({ t: "hello", name: state.name || "Без имени", id: state.myId, chat: chatMeta(chatId, role) }));
+      } catch (e) {}
+      updComposer(); renderList(); refreshHeader();
+    };
+    dc.onclose = function () {
+      conns = conns.filter(function (c) { return c !== rec; });
+      updComposer(); renderList(); refreshHeader();
+    };
+    dc.onmessage = function (e) {
+      var m;
+      try { m = JSON.parse(e.data); } catch (err) { return; }
+      if (m.t === "hello") {
+        rec.remoteName = m.name || "";
+        if (m.chat && m.chat.owner) {
+          // invited side: register the chat from host metadata
+          if (!chatById(chatId)) {
+            var c = { id: chatId, type: m.chat.type, name: m.chat.name, owner: false, members: [], unread: 0, msgs: [] };
+            state.chats.unshift(c); save(); renderList();
+          }
+        }
+        renderList(); refreshHeader();
+        return;
+      }
+      if (m.t === "msg") {
+        addMsg(chatId, { t: "in", text: m.text, from: m.from || rec.remoteName, time: m.time || nowTime() });
+        if (role === "host") relay(chatId, peerId, m);
+      } else if (m.t === "sys") {
+        addMsg(chatId, { t: "sys", text: m.text, time: m.time || nowTime() });
+        if (role === "host") relay(chatId, peerId, m);
+      }
+    };
+    return rec;
+  }
+  function chatMeta(chatId, role) {
+    var c = chatById(chatId);
+    if (!c) return null;
+    return role === "host" ? { owner: true, type: c.type, name: c.name } : null;
+  }
+  function relay(chatId, fromPeerId, m) {
+    var raw = JSON.stringify(m);
+    conns.forEach(function (c) {
+      if (c.chatId === chatId && c.id !== fromPeerId && c.dc && c.dc.readyState === "open") {
+        try { c.dc.send(raw); } catch (e) {}
+      }
     });
   }
-  function nowTime() { return new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }); }
+
+  function chatIdFor(peerId) {
+    return "p2p-" + [state.myId, peerId].sort().join("-");
+  }
+
+  // ---- Outgoing connection (dialer) ----
+  function dial(peerId, chatId, role, onFail) {
+    peerId = normalizeId(peerId);
+    var existing = connByPeer(peerId);
+    if (existing && existing.dc && existing.dc.readyState !== "closed") return true;
+
+    var pc = new RTCPeerConnection(ICE);
+    var dc = pc.createDataChannel("koto");
+    var rec = wireDC(chatId, peerId, dc, role);
+    rec.pc = pc;
+    pc.onicecandidate = function (evt) {
+      if (evt.candidate) sigSend({ type: "CANDIDATE", payload: { candidate: evt.candidate, connectionId: chatId }, dst: peerId });
+    };
+    pc.createOffer().then(function (offer) {
+      return pc.setLocalDescription(offer);
+    }).then(function () {
+      sigSend({
+        type: "OFFER",
+        payload: { sdp: pc.localDescription, connectionId: chatId, chat: chatMeta(chatId, role) },
+        dst: peerId
+      });
+    }).catch(function (e) { if (onFail) onFail(e.message); });
+    return true;
+  }
+
+  // ---- Incoming signaling ----
+  SIG.handlers.push(function (msg) {
+    var peerId = msg.src;
+    if (!peerId) return;
+    if (msg.type === "OFFER") {
+      var sdp = msg.payload && msg.payload.sdp;
+      if (!sdp) return;
+      var chatId = msg.payload.connectionId || chatIdFor(peerId);
+      var meta = msg.payload.chat || null;
+      // ensure chat exists
+      var c = chatById(chatId);
+      if (!c) {
+        var isGrp = meta && (meta.type === "group" || meta.type === "channel");
+        c = {
+          id: chatId,
+          type: isGrp ? meta.type : "contact",
+          name: isGrp ? (meta.name || "Чат") : peerId,
+          owner: false, members: [], unread: 0, msgs: []
+        };
+        state.chats.unshift(c); save(); renderList();
+      }
+      var pc = new RTCPeerConnection(ICE);
+      var rec = { id: peerId, chatId: chatId, pc: pc, dc: null, remoteName: peerId, role: "guest" };
+      conns.push(rec);
+      pc.ondatachannel = function (e) {
+        rec.dc = e.channel;
+        wireDCGuest(rec);
+      };
+      pc.onicecandidate = function (evt) {
+        if (evt.candidate) sigSend({ type: "CANDIDATE", payload: { candidate: evt.candidate, connectionId: chatId }, dst: peerId });
+      };
+      pc.setRemoteDescription(sdp).then(function () {
+        return pc.createAnswer();
+      }).then(function (ans) {
+        return pc.setLocalDescription(ans);
+      }).then(function () {
+        sigSend({
+          type: "ANSWER",
+          payload: { sdp: pc.localDescription, connectionId: chatId },
+          dst: peerId
+        });
+      }).catch(function (e) {});
+    } else if (msg.type === "ANSWER") {
+      var rec2 = connByPeer(peerId);
+      if (rec2 && rec2.pc && msg.payload && msg.payload.sdp) {
+        rec2.pc.setRemoteDescription(msg.payload.sdp).catch(function (e) {});
+      }
+    } else if (msg.type === "CANDIDATE") {
+      var rec3 = connByPeer(peerId);
+      if (rec3 && rec3.pc && msg.payload && msg.payload.candidate) {
+        rec3.pc.addIceCandidate(msg.payload.candidate).catch(function (e) {});
+      }
+    } else if (msg.type === "LEAVE") {
+      conns = conns.filter(function (c) { return c.id !== peerId; });
+      renderList(); updComposer(); refreshHeader();
+    }
+  });
+
+  function wireDCGuest(rec) {
+    var dc = rec.dc;
+    dc.onopen = function () {
+      try {
+        dc.send(JSON.stringify({ t: "hello", name: state.name || "Без имени", id: state.myId, chat: null }));
+      } catch (e) {}
+      updComposer(); renderList(); refreshHeader();
+    };
+    dc.onclose = function () {
+      conns = conns.filter(function (c) { return c !== rec; });
+      updComposer(); renderList(); refreshHeader();
+    };
+    dc.onmessage = function (e) {
+      var m;
+      try { m = JSON.parse(e.data); } catch (err) { return; }
+      if (m.t === "hello") { rec.remoteName = m.name || ""; renderList(); refreshHeader(); return; }
+      if (m.t === "msg") {
+        addMsg(rec.chatId, { t: "in", text: m.text, from: m.from || rec.remoteName, time: m.time || nowTime() });
+      } else if (m.t === "sys") {
+        addMsg(rec.chatId, { t: "sys", text: m.text, time: m.time || nowTime() });
+      }
+    };
+  }
+
+  function normalizeId(id) {
+    id = (id || "").trim().toLowerCase();
+    if (id.indexOf("koto-") !== 0) id = "koto-" + id;
+    return id;
+  }
 
   /* ================= Rendering ================= */
   var filter = "all";
@@ -695,9 +648,7 @@
     state.chats
       .filter(function (c) { return (filter === "all" || c.type === filter) && (!q || c.name.toLowerCase().indexOf(q) >= 0); })
       .forEach(function (c) {
-        var connected = c.owner
-          ? peers.some(function (p) { return p.chatId === c.id && p.dc.readyState === "open"; })
-          : peers.some(function (p) { return p.chatId === c.id && p.dc.readyState === "open"; });
+        var connected = !!connForChat(c.id);
         var el = document.createElement("div");
         el.className = "chat-item" + (c.id === state.activeId ? " active" : "");
         var last = c.msgs[c.msgs.length - 1];
@@ -706,7 +657,7 @@
           '<div class="chat-info"><div class="chat-name"></div><div class="chat-last"></div></div>' +
           '<div class="chat-meta"><div class="time"></div>' + (c.unread ? '<span class="badge">' + c.unread + "</span>" : "") + "</div>";
         el.querySelector(".chat-name").textContent = c.name;
-        el.querySelector(".chat-last").textContent = last ? (last.from ? last.from + ": " + last.text : last.text) : (connected ? "Соединено" : "Нет сообщений");
+        el.querySelector(".chat-last").textContent = last ? (last.from ? last.from + ": " + last.text : last.text) : (connected ? "Соединено" : "Ожидание подключения");
         el.querySelector(".chat-meta .time").textContent = last ? last.time : "";
         el.onclick = function () { openChat(c.id); };
         list.appendChild(el);
@@ -719,27 +670,65 @@
     if (!c) return;
     c.unread = 0; save();
     $("mainHead").style.display = "flex";
-    $("hAvatar").innerHTML = ICONS[c.type] || "";
-    $("hName").textContent = c.name;
-    var acts = $("hActions");
-    if (c.owner) {
-      acts.innerHTML = '<button class="btn" id="btnInvite">Пригласить</button> <button class="btn ghost" id="btnDel">Удалить</button>';
-      $("btnInvite").onclick = function () { startInvite(c.id); };
-      $("btnDel").onclick = function () {
-        peers.filter(function (p) { return p.chatId === c.id; }).forEach(function (p) { try { p.dc.close(); } catch (e) {} });
-        state.chats = state.chats.filter(function (x) { return x.id !== c.id; });
-        state.activeId = null; save(); renderList(); renderMsgs(); $("mainHead").style.display = "none"; updComposer();
-      };
-    } else {
-      acts.innerHTML = '<button class="btn ghost" id="btnLeave">Выйти</button>';
-      $("btnLeave").onclick = function () {
-        peers.filter(function (p) { return p.chatId === c.id; }).forEach(function (p) { try { p.dc.close(); } catch (e) {} });
-        state.chats = state.chats.filter(function (x) { return x.id !== c.id; });
-        state.activeId = null; save(); renderList(); renderMsgs(); $("mainHead").style.display = "none"; updComposer();
-      };
-    }
+    refreshHeader();
     renderMsgs(); renderList(); updComposer();
     document.getElementById("app").classList.add("in-chat");
+    // if owner and chat not connected — redial members
+    if (c.owner && !connForChat(id) && (c.members || []).length) {
+      (c.members || []).forEach(function (mid) { dial(mid, id, "host"); });
+    }
+  }
+
+  function refreshHeader() {
+    var c = chatById(state.activeId);
+    if (!c) return;
+    $("hAvatar").innerHTML = ICONS[c.type] || "";
+    $("hName").textContent = c.name;
+    var conn = connForChat(c.id);
+    var sub = $("hSub");
+    if (conn) {
+      sub.textContent = c.type === "contact" ? "в сети" : c.members.length + " участн. · в сети";
+      sub.className = "mh-sub on";
+    } else {
+      sub.textContent = c.owner ? "ожидание подключения" : "не в сети";
+      sub.className = "mh-sub off";
+    }
+    var acts = $("hActions");
+    if (c.owner) {
+      acts.innerHTML = "";
+      if (c.type === "group" || c.type === "channel") {
+        var addBtn = document.createElement("button");
+        addBtn.className = "btn";
+        addBtn.textContent = "Добавить участника";
+        addBtn.onclick = function () { openAdd(c.id); };
+        acts.appendChild(addBtn);
+        acts.appendChild(document.createTextNode(" "));
+      }
+      var delBtn = document.createElement("button");
+      delBtn.className = "btn ghost";
+      delBtn.textContent = "Удалить";
+      delBtn.onclick = function () {
+        conns.filter(function (p) { return p.chatId === c.id; }).forEach(function (p) { try { p.dc && p.dc.close(); } catch (e) {} });
+        state.chats = state.chats.filter(function (x) { return x.id !== c.id; });
+        state.activeId = null; save(); renderList(); renderMsgs();
+        $("mainHead").style.display = "none"; updComposer();
+        document.getElementById("app").classList.remove("in-chat");
+      };
+      acts.appendChild(delBtn);
+    } else {
+      acts.innerHTML = "";
+      var leaveBtn = document.createElement("button");
+      leaveBtn.className = "btn ghost";
+      leaveBtn.textContent = "Выйти";
+      leaveBtn.onclick = function () {
+        conns.filter(function (p) { return p.chatId === c.id; }).forEach(function (p) { try { p.dc && p.dc.close(); } catch (e) {} });
+        state.chats = state.chats.filter(function (x) { return x.id !== c.id; });
+        state.activeId = null; save(); renderList(); renderMsgs();
+        $("mainHead").style.display = "none"; updComposer();
+        document.getElementById("app").classList.remove("in-chat");
+      };
+      acts.appendChild(leaveBtn);
+    }
   }
 
   function renderMsgs() {
@@ -768,62 +757,94 @@
 
   function updComposer() {
     var c = chatById(state.activeId);
-    var ok = c && peers.some(function (p) { return p.chatId === c.id && p.dc.readyState === "open"; });
+    var ok = c && connForChat(c.id);
     var canWrite = ok && !(c.type === "channel" && !c.owner);
     var inp = $("input");
     inp.disabled = !canWrite;
     $("send").disabled = !canWrite;
-    inp.placeholder = (c && c.type === "channel" && !c.owner) ? "В канале пишут только владелец" : "Написать сообщение...";
+    inp.placeholder = (c && c.type === "channel" && !c.owner) ? "В канале пишут только владелец" : (c && c.owner && !ok ? "Ожидание подключения собеседника..." : "Написать сообщение...");
   }
 
-  function chatById(id) {
-    for (var i = 0; i < state.chats.length; i++) if (state.chats[i].id === id) return state.chats[i];
-    return null;
-  }
   function addMsg(chatId, m) {
     var c = chatById(chatId); if (!c) return;
     c.msgs.push(m);
     if (state.activeId !== chatId) c.unread = (c.unread || 0) + 1;
     save(); renderList();
     if (state.activeId === chatId) renderMsgs();
+    if (m.t === "in") notifyIncoming(c, m);
   }
 
-  /* ================= Wire a data channel into a chat ================= */
-  function wireChannel(chatId, dc, role) {
-    var rec = { chatId: chatId, dc: dc, name: "", role: role };
-    peers.push(rec);
-    dc.onopen = function () {
-      dc.send(JSON.stringify({ t: "hello", name: state.name || "Гость" }));
-      var c = chatById(chatId);
-      if (c && role === "guest") addMsg(chatId, { t: "sys", text: "Соединение установлено", time: nowTime() });
-      updComposer(); renderList();
-      var acts = document.querySelector(".mh-actions");
-      var sub = $("hSub");
-      var conn = peers.some(function (p) { return p.chatId === chatId && p.dc.readyState === "open"; });
-      if (conn) { sub.textContent = "в сети"; sub.className = "mh-sub on"; }
-    };
-    dc.onclose = function () {
-      peers = peers.filter(function (p) { return p !== rec; });
-      var sub = $("hSub");
-      sub.textContent = "не в сети"; sub.className = "mh-sub off";
-      updComposer(); renderList();
-    };
-    dc.onmessage = function (e) {
-      var m;
-      try { m = JSON.parse(e.data); } catch (err) { return; }
-      if (m.t === "hello") { rec.name = m.name || "Гость"; return; }
-      if (m.t === "msg" || m.t === "sys") {
-        addMsg(chatId, { t: m.from ? "in" : "sys", text: m.text, from: m.from || (rec.name || ""), time: m.time || nowTime() });
-        // host relays to other peers of the same chat
-        if (role === "owner") {
-          var relay = JSON.stringify(m);
-          peers.forEach(function (p) {
-            if (p.chatId === chatId && p !== rec && p.dc.readyState === "open") p.dc.send(relay);
-          });
-        }
-      }
-    };
+  /* ================= Notifications & background mode ================= */
+  var bgEnabled = false, wakeLock = null, lastNotifyChat = null;
+  try { bgEnabled = localStorage.getItem("kotochat.bg") === "1"; } catch (e) {}
+
+  function requestBg() {
+    var want = !bgEnabled;
+    if (want) {
+      bgEnabled = true;
+      try { localStorage.setItem("kotochat.bg", "1"); } catch (e) {}
+      if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
+      acquireWakeLock();
+    } else {
+      bgEnabled = false;
+      try { localStorage.setItem("kotochat.bg", "0"); } catch (e) {}
+      releaseWakeLock();
+    }
+    $("bgSwitch").className = "switch" + (bgEnabled ? " on" : "");
   }
+  function acquireWakeLock() {
+    if (!bgEnabled || !("wakeLock" in navigator) || wakeLock) return;
+    navigator.wakeLock.request("screen").then(function (wl) {
+      wakeLock = wl;
+      wakeLock.addEventListener("release", function () { wakeLock = null; });
+    }).catch(function () {});
+  }
+  function releaseWakeLock() {
+    if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
+  }
+  function notifyIncoming(chat, m) {
+    if (!bgEnabled) return;
+    var hidden = document.visibilityState !== "visible" || state.activeId !== chat.id;
+    if (!hidden) return;
+    // sound (short beep via WebAudio, no external files)
+    try {
+      var ctx = notifyIncoming.actx || (notifyIncoming.actx = new (window.AudioContext || window.webkitAudioContext)());
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.value = 830; g.gain.value = 0.06;
+      o.connect(g); g.connect(ctx.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.25);
+      o.stop(ctx.currentTime + 0.26);
+    } catch (e) {}
+    // system notification
+    if ("Notification" in window && Notification.permission === "granted") {
+      try {
+        var n = new Notification(chat.name, {
+          body: (m.from ? m.from + ": " : "") + m.text,
+          tag: "koto-" + chat.id
+        });
+        n.onclick = function () { window.focus(); openChat(chat.id); n.close(); };
+      } catch (e) {}
+    }
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") {
+      // reconnect signaling and chats when returning
+      if (!SIG.open) sigConnect();
+      state.chats.forEach(function (c) {
+        if (c.owner && c.members && c.members.length && !connForChat(c.id)) {
+          c.members.forEach(function (mid) { dial(mid, c.id, "host"); });
+        }
+      });
+      acquireWakeLock();
+    }
+  });
+  $("bgSwitch").onclick = requestBg;
+  if (bgEnabled) $("bgSwitch").className = "switch on";
+  // keep signaling socket alive: browsers may kill idle ws timers in background
+  setInterval(function () {
+    if (SIG.open) sigSend({ type: "HEARTBEAT" });
+  }, 20000);
 
   /* ================= Modal helpers ================= */
   function openOverlay(id) { $(id).classList.add("open"); }
@@ -841,9 +862,26 @@
   document.querySelectorAll("[data-new]").forEach(function (el) {
     el.onclick = function () {
       newType = el.getAttribute("data-new");
-      $("createTitle").textContent = "Новая " + (newType === "contact" ? "группа" : (newType === "group" ? "группа" : "группа"));
       $("createTitle").textContent = newType === "contact" ? "Новый контакт" : (newType === "group" ? "Новая группа" : "Новый канал");
       $("createName").value = "";
+      $("createIds").value = "";
+      $("createStatus").textContent = "";
+      var isGrp = newType !== "contact";
+      $("idsLbl").style.display = isGrp ? "block" : "none";
+      $("createIds").style.display = isGrp ? "block" : "none";
+      if (newType === "contact") {
+        $("nameLbl").textContent = "Название";
+        $("createName").placeholder = "Например: Максим";
+        $("createHint").textContent = "Контакт появится сразу, а соединение установится, когда вы введёте его ID (кнопка «Подключить» появится в шапке чата).";
+      } else if (newType === "group") {
+        $("nameLbl").textContent = "Название группы";
+        $("createName").placeholder = "Например: Команда";
+        $("createHint").textContent = "Введите ID участников — их можно добавить и позже. Сообщения в группе пересылаются через вас.";
+      } else {
+        $("nameLbl").textContent = "Название канала";
+        $("createName").placeholder = "Например: Новости";
+        $("createHint").textContent = "Введите ID подписчиков. Писать в канал можете только вы.";
+      }
       closeOverlay("ovMenu"); openOverlay("ovCreate");
       $("createName").focus();
     };
@@ -851,156 +889,114 @@
   $("btnCreateOk").onclick = function () {
     var name = ($("createName").value || "").trim();
     if (!name) return;
-    var c = { id: Date.now(), type: newType, name: name, owner: true, unread: 0, msgs: [] };
+    var c = { id: "c" + Date.now(), type: newType, name: name, owner: true, members: [], unread: 0, msgs: [] };
+    if (newType !== "contact") {
+      var ids = ($("createIds").value || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+      c.members = ids.map(normalizeId);
+    }
     state.chats.unshift(c); save(); renderList();
     closeOverlay("ovCreate");
-    startInvite(c.id);
-  };
-  $("btnJoinMenu").onclick = function () { closeOverlay("ovMenu"); openJoin(); };
-
-  /* ================= Host: create invite ================= */
-  var curInvite = null; // {chatId, pc}
-  function startInvite(chatId) {
-    var c = chatById(chatId);
-    closeOverlay("ovMenu");
-    $("offerOut").value = "Готовится код...".replace("Готовится код...", "Готовится...");
-    $("answerIn").value = "";
-    setInviteStatus("Собираем данные для приглашения...", false);
-    openOverlay("ovInvite");
-    try {
-      var pc = new RTCPeerConnection(ICE);
-      var dc = pc.createDataChannel("koto");
-      var p = { chatId: chatId, pc: pc };
-      curInvite = p;
-      wireChannel(chatId, dc, "owner");
-      pc.createOffer().then(function (offer) {
-        return pc.setLocalDescription(offer);
-      }).then(function () {
-        return waitIce(pc);
-      }).then(function () {
-        var code = sdpToCompactCode(pc.localDescription.sdp || pc.localDescription.sdp, TYPE[c.type], c.name);
-        $("offerOut").value = code;
-        try {
-          var url = location.href.split("#")[0] + "#j=" + code;
-          QR.draw($("qrHost"), url, 3);
-          $("qrHostBox").style.display = "flex";
-        } catch (e) {
-          $("qrHostBox").style.display = "none";
-          setInviteStatus("QR недоступен для этого кода — передайте его текстом.", true);
-          return;
-        }
-        setInviteStatus("Готово. Собеседник сканирует QR (или вставляет код), затем пришлёт вам ответ.", false);
-      }).catch(function (e) {
-        setInviteStatus("Ошибка: " + e.message, true);
-      });
-    } catch (e) {
-      setInviteStatus("WebRTC недоступен в этом окружении. Скачайте файл и откройте в браузере.", true);
+    // dial members immediately
+    (c.members || []).forEach(function (mid) { dial(mid, c.id, "host"); });
+    openChat(c.id);
+    if (newType === "contact") {
+      var acts = $("hActions");
+      acts.insertBefore(makeConnectBtn(c), acts.firstChild);
     }
-  }
-  function setInviteStatus(text, err) {
-    var st = $("inviteStatus");
-    st.textContent = text;
-    st.className = "status" + (err ? " err" : "");
-  }
-  $("btnCopyOffer").onclick = function () {
-    $("offerOut").select();
-    try { document.execCommand("copy"); setInviteStatus("Скопировано.", false); } catch (e) {}
   };
-  $("btnAcceptAnswer").onclick = function () {
-    if (!curInvite) return;
-    try {
-      var sdp = answerCodeToSDP($("answerIn").value);
-      curInvite.pc.setRemoteDescription({ type: "answer", sdp: sdp }).then(function () {
-        setInviteStatus("Ответ принят. Устанавливаем соединение...", false);
-        setTimeout(function () { closeOverlay("ovInvite"); }, 800);
-      }).catch(function (e) {
-        setInviteStatus("Не удалось принять ответ: " + e.message, true);
-      });
-    } catch (e) {
-      setInviteStatus(e.message, true);
+  function makeConnectBtn(c) {
+    var b = document.createElement("button");
+    b.className = "btn";
+    b.textContent = "Подключить по ID";
+    b.onclick = function () { openAdd(c.id); };
+    return b;
+  }
+  // add connect button for contact chats without connection
+  var origRefresh = refreshHeader;
+  refreshHeader = function () {
+    origRefresh();
+    var c = chatById(state.activeId);
+    if (c && c.owner && c.type === "contact" && !connForChat(c.id)) {
+      var acts = $("hActions");
+      if (acts && !acts.querySelector("[data-connectbtn]")) {
+        var b = makeConnectBtn(c);
+        b.setAttribute("data-connectbtn", "1");
+        acts.insertBefore(b, acts.firstChild);
+      }
     }
   };
 
-  /* ================= Guest: join ================= */
-  function openJoin(prefill) {
-    $("offerIn").value = prefill || "";
-    $("answerOut").style.display = "none";
-    $("answerLabel").style.display = "none";
-    $("qrGuestBox").style.display = "none";
-    $("copyAnswerRow").style.display = "none";
-    $("joinStatus").textContent = "";
-    $("joinStatus").className = "status";
-    openOverlay("ovJoin");
+  /* ================= Add by ID ================= */
+  var addChatId = null;
+  function openAdd(chatId) {
+    addChatId = chatId || null;
+    $("addId").value = "";
+    $("addStatus").textContent = "";
+    $("addStatus").className = "status";
+    openOverlay("ovAdd");
+    $("addId").focus();
   }
-  $("btnJoin").onclick = function () {
-    var raw = ($("offerIn").value || "").trim();
-    if (!raw) return;
-    var code = raw.indexOf("#j=") >= 0 ? raw.split("#j=")[1] : raw;
-    var st = $("joinStatus");
-    try {
-      var info = codeToSDP(code, "answer"); // guest answers
-      st.textContent = "Устанавливаем соединение..."; st.className = "status";
-      var pc = new RTCPeerConnection(ICE);
-      var c = { id: Date.now(), type: Object.keys(TYPE).filter(function (k) { return TYPE[k] === info.type; })[0] || "contact", name: info.name, owner: false, unread: 0, msgs: [] };
-      pc.ondatachannel = function (e) {
-        wireChannel(c.id, e.channel, "guest");
-        state.chats.unshift(c); save(); renderList();
-      };
-      pc.setRemoteDescription({ type: "offer", sdp: info.sdp }).then(function () {
-        return pc.createAnswer();
-      }).then(function (ans) {
-        return pc.setLocalDescription(ans);
-      }).then(function () {
-        return waitIce(pc);
-      }).then(function () {
-        var ansCode = answerSdpToCode(pc.localDescription.sdp);
-        $("answerOut").value = ansCode;
-        $("answerOut").style.display = "block";
-        $("answerLabel").style.display = "block";
-        $("copyAnswerRow").style.display = "flex";
-        try {
-          var url = location.href.split("#")[0] + "#a=" + ansCode;
-          QR.draw($("qrGuest"), url, 3);
-          $("qrGuestBox").style.display = "flex";
-        } catch (e) { $("qrGuestBox").style.display = "none"; }
-        st.textContent = "Отправьте код-ответ владельцу чата. После его подключения начнётся обмен сообщениями.";
-        st.className = "status";
-      }).catch(function (e) {
-        st.textContent = "Ошибка соединения: " + e.message; st.className = "status err";
-      });
-    } catch (e) {
-      st.textContent = e.message; st.className = "status err";
+  $("btnAddOk").onclick = function () {
+    var peerId = normalizeId($("addId").value);
+    if (peerId === state.myId) {
+      $("addStatus").textContent = "Это ваш собственный ID.";
+      $("addStatus").className = "status err";
+      return;
     }
-  };
-  $("btnCopyAnswer").onclick = function () {
-    $("answerOut").select();
-    try { document.execCommand("copy"); } catch (e) {}
+    var c;
+    if (addChatId) {
+      c = chatById(addChatId);
+    } else {
+      c = { id: "c" + Date.now(), type: "contact", name: peerId, owner: true, members: [], unread: 0, msgs: [] };
+      state.chats.unshift(c); save(); renderList();
+    }
+    if (c.members && c.members.indexOf(peerId) < 0) { c.members.push(peerId); save(); }
+    dial(peerId, c.id, "host", function (err) {
+      $("addStatus").textContent = "Ошибка: " + err;
+      $("addStatus").className = "status err";
+    });
+    $("addStatus").textContent = "Подключаемся к " + peerId + "…";
+    $("addStatus").className = "status";
+    setTimeout(function () {
+      if (connForChat(c.id)) {
+        $("addStatus").textContent = "Соединено!";
+        setTimeout(function () { closeOverlay("ovAdd"); openChat(c.id); }, 600);
+      } else {
+        $("addStatus").textContent = "Не удалось подключиться: проверьте, что собеседник онлайн (открыл KotoChat).";
+        $("addStatus").className = "status err";
+      }
+    }, 7000);
   };
 
   /* ================= Sending ================= */
   function send() {
     var c = chatById(state.activeId);
     if (!c) return;
-    var rec = peers.filter(function (p) { return p.chatId === c.id && p.dc.readyState === "open"; })[0];
-    if (!rec) return;
-    var text = $("input").value.trim();
-    if (!text) return;
-    var time = nowTime();
-    var payload = JSON.stringify({ t: "msg", text: text, time: time, from: "" });
-    rec.dc.send(payload);
     if (c.owner) {
-      // relay own message to all other members
-      peers.forEach(function (p) { if (p.chatId === c.id && p !== rec && p.dc.readyState === "open") p.dc.send(payload); });
+      var open = conns.filter(function (p) { return p.chatId === c.id && p.dc && p.dc.readyState === "open"; });
+      if (!open.length) return;
+      var text = $("input").value.trim();
+      if (!text) return;
+      var time = nowTime();
+      var payload = JSON.stringify({ t: "msg", text: text, time: time, from: state.name || "Я" });
+      open.forEach(function (p) { try { p.dc.send(payload); } catch (e) {} });
       addMsg(c.id, { t: "out", text: text, time: time });
+      $("input").value = "";
     } else {
-      addMsg(c.id, { t: "out", text: text, time: time });
+      var rec = connForChat(c.id);
+      if (!rec) return;
+      var text2 = $("input").value.trim();
+      if (!text2) return;
+      var time2 = nowTime();
+      rec.dc.send(JSON.stringify({ t: "msg", text: text2, time: time2, from: state.name || "Я" }));
+      addMsg(c.id, { t: "out", text: text2, time: time2 });
+      $("input").value = "";
     }
-    $("input").value = "";
   }
   $("send").onclick = send;
   $("input").addEventListener("keydown", function (e) { if (e.key === "Enter") send(); });
 
-  /* ================= Tabs / search / back ================= */
+  /* ================= Tabs / search / nav ================= */
   document.querySelectorAll(".tab").forEach(function (t) {
     t.onclick = function () {
       document.querySelectorAll(".tab").forEach(function (x) { x.classList.remove("active"); });
@@ -1010,35 +1006,58 @@
     };
   });
   $("search").addEventListener("input", renderList);
-  $("logo").addEventListener("click", function () {
-    // clicking logo on mobile returns to list
-    document.getElementById("app").classList.remove("in-chat");
-  });
-  document.querySelector(".logo").addEventListener("click", function () {
+  $("logoBtn").addEventListener("click", function () {
     document.getElementById("app").classList.remove("in-chat");
   });
 
   /* ================= Profile ================= */
-  function askProfile() {
+  $("btnProfile").onclick = function () {
     $("profileName").value = state.name || "";
+    $("profileId").value = state.myId;
+    $("profileStatus").textContent = "";
     openOverlay("ovProfile");
-  }
+  };
   $("btnSaveProfile").onclick = function () {
     var n = ($("profileName").value || "").trim();
     if (!n) return;
     state.name = n; save();
     closeOverlay("ovProfile");
   };
+  $("btnCopyId").onclick = function () {
+    var val = state.myId;
+    var done = function () {
+      var b = $("btnCopyId");
+      b.textContent = "скопировано";
+      setTimeout(function () { b.textContent = "копировать"; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(val).then(done).catch(function () { fallbackCopy(val, done); });
+    } else fallbackCopy(val, done);
+  };
+  function fallbackCopy(text, done) {
+    var ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
 
   /* ================= Init ================= */
   load();
+  $("myIdVal").textContent = state.myId;
   renderList();
-  if (!state.name) askProfile();
-
-  // hash deep-link: #j=invite  (scanned QR opens the app with the code)
-  if (location.hash.indexOf("#j=") === 0) {
-    setTimeout(function () { openJoin(location.hash.slice(3)); }, 300);
+  sigConnect();
+  if (bgEnabled) {
+    acquireWakeLock();
+    if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
   }
+  if (!state.name) setTimeout(function () { $("btnProfile").onclick(); }, 200);
+  // reconnect chats we own on load
+  state.chats.forEach(function (c) {
+    if (c.owner && c.members && c.members.length) {
+      c.members.forEach(function (mid) { dial(mid, c.id, "host"); });
+    }
+  });
 })();
 </script>
 </body>
